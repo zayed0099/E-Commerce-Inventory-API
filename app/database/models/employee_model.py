@@ -14,7 +14,7 @@ class Employee(Base):
 	password: Mapped[str | None] = mapped_column(String(100))
 	role: Mapped[str] = mapped_column(String(20), default="packaging", nullable=False)
 
-	is_banned: Mapped[bool] = mapped_column(default=False, nullable=False)
+	is_banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
