@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime
 from app.database import Base
 
-class Employee(Base):
+class EmployeeDB(Base):
 	__tablename__ = "employees"
 	
 	id: Mapped[int] = mapped_column(primary_key=True)
