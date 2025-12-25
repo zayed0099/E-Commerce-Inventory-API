@@ -26,7 +26,6 @@ def decode_jwt(token: str) -> Optional[dict]:
 			headers={"WWW-Authenticate": "Bearer"},
 		)
 
-
 async def create_jwt(user_id, role):
 	access_token = jwt.encode(
 		payload={

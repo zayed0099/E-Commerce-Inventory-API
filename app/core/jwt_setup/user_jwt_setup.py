@@ -1,10 +1,8 @@
-import jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from sqlalchemy import select, exists, and_
-from .jwt_setup import JWT_ALGORITHM, JWT_SECRET
 from .jwt_config import security, decode_jwt
 
 async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):

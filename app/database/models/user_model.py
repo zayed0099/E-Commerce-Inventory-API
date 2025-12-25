@@ -21,8 +21,8 @@ class UserDB(Base):
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 	# relationships
-	orders_summary: Mapped["OrderSummary"] = relationship(
+	orders_summary: Mapped[List["OrderSummary"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")
 
-	track_orders: Mapped["OrderTracking"] = relationship(
+	track_orders: Mapped[List["OrderTracking"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")

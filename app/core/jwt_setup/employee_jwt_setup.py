@@ -1,4 +1,3 @@
-import jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -8,36 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.db import SessionLocal, EmployeeDB
 from .jwt_config import security, decode_jwt
 from app.core.logging import admin_logger
-
-async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
-	async with SessionLocal() as db:
-		token = cred.credentials
-		payload = decode_jwt(token)
-		if not payload:
-			raise HTTPException(
-				status_code=status.HTTP_401_UNAUTHORIZED,
-				detail="Could not validate credentials",
-				headers={"WWW-Authenticate": "Bearer"},
-			)
-
-		query = await db.execute(
-			select(exists().where(
-				and_(
-					EmployeeDB.id == payload["user_id"],
-					EmployeeDB.role == role
-				)
-			))
-		)
-		record_exists = query.scalar()
-
-		if record_exists:
-			return payload
-		else:
-			raise HTTPException(
-				status_code=status.HTTP_401_UNAUTHORIZED,
-				detail="Authentication error.",
-				headers={"WWW-Authenticate": "Bearer"},
-			)
 
 async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security)):
 	return await check_employee_role(cred, "admin")
@@ -50,3 +19,35 @@ async def support_role_required(cred: HTTPAuthorizationCredentials = Depends(sec
 
 async def packaging_role_required(cred: HTTPAuthorizationCredentials = Depends(security)):
 	return await check_employee_role(cred, "packaging")
+
+async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
+	async with SessionLocal() as db:
+		token = cred.credentials
+		payload = decode_jwt(token)
+		if not payload:
+			raise HTTPException(
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Could not validate credentials",
+				headers={"WWW-Authenticate": "Bearer"},
+			)
+
+		user_id = payload["user_id"]
+		query = await db.execute(
+			select(exists().where(
+				and_(
+					EmployeeDB.id == user_id,
+					EmployeeDB.role == role
+				)
+			))
+		)
+		record_exists = query.scalar()
+
+		if record_exists:
+			admin_logger.info(f"User[{user_id}] logged in. Role: {role}")
+			return payload
+		else:
+			raise HTTPException(
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Authentication error.",
+				headers={"WWW-Authenticate": "Bearer"},
+			)
