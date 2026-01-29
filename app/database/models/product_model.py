@@ -8,7 +8,6 @@ class Products(Base):
 	__tablename__ = "products"
 	
 	id: Mapped[int] = mapped_column(primary_key=True)
-	
 	is_archived: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
 
 	product_name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -20,6 +19,8 @@ class Products(Base):
 	catg_id: Mapped[int] = mapped_column(ForeignKey(
 		"categories.id", index=True))
 
+	orders: Mapped[List["Products"]] = relationship(back_populates="product")
+	
 	category: Mapped["Category"] = relationship(back_populates="products")
 	
 	items: Mapped[List["Inventory"]] = relationship(
@@ -47,7 +48,8 @@ class Category(Base):
 		String(100), index=True, nullable=False)
 
 	products: Mapped[List["Products"]] = relationship(back_populates="category")
-
+	orders: Mapped[List["Products"]] = relationship(back_populates="category")
+	
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

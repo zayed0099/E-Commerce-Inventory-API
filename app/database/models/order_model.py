@@ -4,12 +4,17 @@ from typing import List
 from datetime import datetime
 from app.database import Base
 
+""" 
+this is mainly for internal processing of orders
+orders are processed in packaging using this model
+"""
 class OrderItem(Base):
 	__tablename__ = "order_items"
 
 	id: Mapped[int] = mapped_column(primary_key=True)
 
-	quantity: Mapped[int] = mapped_column(default=1, nullable=False)
+	quantity: Mapped[int] = mapped_column(nullable=False)
+	unit_price_at_order: Mapped[int] = mapped_column(nullable=False)
 	
 	is_processed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 	is_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -22,21 +27,34 @@ class OrderItem(Base):
 	tracking_id: Mapped[int] = mapped_column(ForeignKey(
 		"order_tracking.id", ondelete="CASCADE", index=True))
 	
-	# product_id
-	# catg_id
+	product_id: Mapped[int] = mapped_column(ForeignKey(
+		"products.id", ondelete="CASCADE", index=True))
+	
+	catg_id: Mapped[int] = mapped_column(ForeignKey(
+		"categories.id", ondelete="CASCADE", index=True))
 
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="items")
 	order_summary: Mapped["OrderSummary"] = relationship(back_populates="item")
+	product: Mapped["Products"] = relationship(back_populates="orders")
+	category: Mapped["Category"] = relationship(back_populates="orders")
 
 	__table_args__ = (
 		CheckConstraint('quantity >= 1 AND quantity <= 200', name='ck_quantity'),
 	)
 
+"""
+main db table to record and process orders.
+orders are taken using this table and fk'd in other two models
+"""
 class OrderTracking(Base):
 	__tablename__ = "order_tracking"
 
-	tracking_number: Mapped[str] = mapped_column(String(10), index=True, nullable=False)
-	
+	id: Mapped[int] = mapped_column(primary_key=True)
+
+	"""
+	planning to send the "id" of this table to user and hash it
+	Later will decode the code and get tracking id + user_id.
+	"""
 	pay_method: Mapped[str] = mapped_column(String(20), nullable=False)
 	payment_status: Mapped[str] = mapped_column(String(15), nullable=False)
 	
@@ -52,7 +70,10 @@ class OrderTracking(Base):
 
 	orders_summary: Mapped[List["OrderTrackingLink"]] = relationship(
 		back_populates="tracking", cascade="all, delete-orphan")
-# 
+
+	deliverydetails: Mapped["DeliveryDetails"] = relationship(
+		back_populates="track_order", cascade="all, delete-orphan")
+	
 	user: Mapped["UserDB"] = relationship(back_populates="track_order")
 
 	__table_args__ = (
@@ -67,13 +88,14 @@ class OrderTracking(Base):
 			"delivery_status IN ('delivered', 'on_way', 'processing')", 
 			name='ck_delivery_status'),
 	)
-
+"""
+this is to summariaze orders
+note: i am still trying to figure out is this is really necessary or not
+"""
 class OrderSummary(Base):
 	__tablename__ = "ordersummary"
 
 	id: Mapped[int] = mapped_column(primary_key=True)
-	
-	unit_price_at_order: Mapped[int] = mapped_column(nullable=False)
 	
 	# Foreign Keys and Relationships
 	user_id: Mapped[int] = mapped_column(ForeignKey(
@@ -86,3 +108,30 @@ class OrderSummary(Base):
 	item: Mapped["OrderItem"] = relationship(back_populates="order_summary")
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="orders_summary")
 	user: Mapped["UserDB"] = relationship(back_populates="orders_summary")
+
+
+"""
+Table to keep all delivery details of orders
+a one<->one relatinonship with tracking table
+"""
+class DeliveryDetails(Base):
+	__tablename__ = "deliverydetails"
+
+	id: Mapped[int] = mapped_column(primary_key=True)
+	
+	address_line: Mapped[str] = mapped_column(String(200), nullable=False)
+	postal_code: Mapped[str] = mapped_column(String(10), nullable=False)
+	city: Mapped[str] = mapped_column(String(100), nullable=False)
+	country: Mapped[str] = mapped_column(String(100), nullable=False)
+
+	sec_email: Mapped[str] = mapped_column(Text(50), nullable=False)
+	sec_phone: Mapped[str] = mapped_column(String(20), nullable=False)
+
+	tracking_id: Mapped[int] = mapped_column(ForeignKey(
+		"order_tracking.id", ondelete="CASCADE", index=True))
+
+	track_order: Mapped["OrderTracking"] = relationship(back_populates="deliverydetails")
+
+	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+	updated_at: Mapped[datetime] = mapped_column(
+		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

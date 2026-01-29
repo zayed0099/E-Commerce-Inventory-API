@@ -11,6 +11,14 @@ security = HTTPBearer()
 def decode_jwt(token: str) -> Optional[dict]:
 	try:
 		decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+		user_id = decoded_token.get("user_id", None)
+
+		if user_id is None:
+			raise HTTPException(
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Invalid token payload",
+				headers={"WWW-Authenticate": "Bearer"},
+			)
 		return decoded_token
 		
 	except jwt.ExpiredSignatureError:

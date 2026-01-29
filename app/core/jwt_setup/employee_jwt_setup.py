@@ -24,6 +24,7 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 	async with SessionLocal() as db:
 		token = cred.credentials
 		payload = decode_jwt(token)
+		
 		if not payload:
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
@@ -46,6 +47,8 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 			admin_logger.info(f"User[{user_id}] logged in. Role: {role}")
 			return payload
 		else:
+			admin_logger.info(
+				f"Invalid Login attempt! User : {user_id}, Role: {role}")
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
 				detail="Authentication error.",

@@ -22,5 +22,6 @@ class EmployeeDB(Base):
 
 	__table_args__ = (
 		CheckConstraint(
-			"role IN ('admin', 'stock_manager', 'support', 'packaging')", name='ck_user_role'),
-	)
+			"role IN ('admin', 'stock_manager', 'support', 'packaging')", 
+			name='ck_user_role'),
+)

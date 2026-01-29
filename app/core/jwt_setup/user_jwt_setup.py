@@ -18,7 +18,7 @@ async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security
 
 	# checking if user has an active api_key
 	# if not, then user won't be able to access api even if he has a valid jwt
-	user_id = payload["user_id"]
+	# user_id = payload["user_id"]
 	# await api_limit_manage(user_id)
 		
 	return payload

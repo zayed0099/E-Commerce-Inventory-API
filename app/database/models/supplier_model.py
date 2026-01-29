@@ -19,9 +19,9 @@ class Suppliers(Base):
 	supp_type: Mapped[str] = mapped_column(String(30),
 		default='distributor', nullable=False)
 
-	details: Mapped["Suppliers"] = relationship(
+	details: Mapped["SupplierDetails"] = relationship(
 		back_populates="supplier", cascade="all, delete-orphan")
-	product_link: Mapped[List["Suppliers"]] = relationship(back_populates="productlink")
+	product_link: Mapped[List["ProductSupplierLink"]] = relationship(back_populates="productlink")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
@@ -65,14 +65,15 @@ class ProductSupplierLink(Base):
 
 	rate: Mapped[int] = mapped_column(default=0, nullable=False)
 	unit_supplied: Mapped[int] = mapped_column(default=0, nullable=False)
-	delivery_method: Mapped[str] = mapped_column(default='', nullable=False)
+	delivery_method: Mapped[str] = mapped_column(
+		default='warehouse_delivery', nullable=False)
 
 	supp_id: Mapped[int] = mapped_column(ForeignKey(
 		"suppliers.id", index=True))
 	product_id: Mapped[int] = mapped_column(ForeignKey(
 		"products.id", index=True))
 
-	product: Mapped["Category"] = relationship(back_populates="supplierlink")
+	product: Mapped["Products"] = relationship(back_populates="supplierlink")
 	supplier: Mapped["Suppliers"] = relationship(back_populates="productlink")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
