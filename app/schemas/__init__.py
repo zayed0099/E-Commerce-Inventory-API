@@ -1,5 +1,5 @@
-from .order_schemas import NewOrder, NewOrderAddress
+from .order_schemas import *
 
 __all__ = [
-	"NewOrder", "NewOrderAddress"
+	"NewOrder", "NewOrderAddress", "NewOrderConfirmation"
 ]

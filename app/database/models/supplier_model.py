@@ -21,7 +21,8 @@ class Suppliers(Base):
 
 	details: Mapped["SupplierDetails"] = relationship(
 		back_populates="supplier", cascade="all, delete-orphan")
-	product_link: Mapped[List["ProductSupplierLink"]] = relationship(back_populates="productlink")
+	product_link: Mapped[List["ProductSupplierLink"]] = relationship(
+		back_populates="productlink")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
@@ -49,7 +50,7 @@ class SupplierDetails(Base):
 	sec_phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
 	supp_id: Mapped[int] = mapped_column(ForeignKey(
-		"suppliers.id", index=True))
+		"suppliers.id"), index=True, nullable=False)
 
 	supplier: Mapped["Suppliers"] = relationship(back_populates="details")
 
@@ -69,13 +70,17 @@ class ProductSupplierLink(Base):
 		default='warehouse_delivery', nullable=False)
 
 	supp_id: Mapped[int] = mapped_column(ForeignKey(
-		"suppliers.id", index=True))
+		"suppliers.id"), nullable=False, index=True)
 	product_id: Mapped[int] = mapped_column(ForeignKey(
-		"products.id", index=True))
+		"products.id"), nullable=False, index=True)
+
+	order_placed_at: Mapped[datetime] = mapped_column(nullable=False)
+	delivered_at: Mapped[datetime] = mapped_column(nullable=False)
 
 	product: Mapped["Products"] = relationship(back_populates="supplierlink")
 	supplier: Mapped["Suppliers"] = relationship(back_populates="productlink")
 
+	# for db use
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -85,3 +90,6 @@ class ProductSupplierLink(Base):
 			"delivery_method IN ('warehouse_delivery', 'own_cost')", 
 			name='ck_delivery_method'),
 	)
+
+
+

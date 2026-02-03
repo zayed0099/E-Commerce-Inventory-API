@@ -11,7 +11,7 @@ class UserDB(Base):
 
 	username: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)
 	email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-	password: Mapped[str | None] = mapped_column(String(100))
+	password: Mapped[str | None] = mapped_column(String(150))
 
 	is_oauth_login: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 	is_banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

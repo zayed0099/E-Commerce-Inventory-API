@@ -1,10 +1,27 @@
+""" 
+***How the order-management cycle works***
+A entry for a new order is created on OrderTracking.
+	=> We use the pk from OrderTracking + users user_id and create a 8 char hash.
+	=> then send it to user as order tracking number.
+then we use pk from OrderTracking and create entry on OrderItem for products 
+of that order. If a order has 2 products then we get 2 entry on OrderItem for that order.
+
+we use the OrderItem id + OrderTracking id + user_id and add entry on OrderSummary.
+(Still not sure if the OrderSummary is really necessary)
+
+A single order can have: 
+- Only One Entry on OrderTracking
+- One/Multiple Entry on OrderItem
+- One/Multiple Entry on OrderSummary
+"""
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, CheckConstraint
 from typing import List
 from datetime import datetime
 from app.database import Base
 
-""" 
+"""
 this is mainly for internal processing of orders
 orders are processed in packaging using this model
 """
@@ -25,16 +42,15 @@ class OrderItem(Base):
 	
 	# Foreign Keys and Relationships
 	tracking_id: Mapped[int] = mapped_column(ForeignKey(
-		"order_tracking.id", ondelete="CASCADE", index=True))
+		"order_tracking.id", ondelete="CASCADE"), index=True, nullable=False)
 	
 	product_id: Mapped[int] = mapped_column(ForeignKey(
-		"products.id", ondelete="CASCADE", index=True))
+		"products.id", ondelete="CASCADE"), index=True, nullable=False)
 	
 	catg_id: Mapped[int] = mapped_column(ForeignKey(
-		"categories.id", ondelete="CASCADE", index=True))
+		"categories.id", ondelete="CASCADE"), index=True, nullable=False)
 
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="items")
-	order_summary: Mapped["OrderSummary"] = relationship(back_populates="item")
 	product: Mapped["Products"] = relationship(back_populates="orders")
 	category: Mapped["Category"] = relationship(back_populates="orders")
 
@@ -63,7 +79,7 @@ class OrderTracking(Base):
 
 	# Foreign Keys and Relationships
 	user_id: Mapped[int] = mapped_column(ForeignKey(
-		"users.id", ondelete="CASCADE", index=True))
+		"users.id", ondelete="CASCADE"), index=True, nullable=False)
 
 	items: Mapped[List["OrderItem"]] = relationship(
 		back_populates="tracking", cascade="all, delete-orphan")
@@ -99,13 +115,13 @@ class OrderSummary(Base):
 	
 	# Foreign Keys and Relationships
 	user_id: Mapped[int] = mapped_column(ForeignKey(
-		"users.id", ondelete="CASCADE", index=True))
-	orderitem_id: Mapped[int] = mapped_column(ForeignKey(
-		"order_items.id", ondelete="CASCADE", index=True))
+		"users.id", ondelete="CASCADE"), index=True, nullable=False)
 	tracking_id: Mapped[int] = mapped_column(ForeignKey(
-		"order_tracking.id", ondelete="CASCADE", index=True))
+		"order_tracking.id", ondelete="CASCADE"), index=True, nullable=False)
 	
-	item: Mapped["OrderItem"] = relationship(back_populates="order_summary")
+	hashed_tracking_id: Mapped[str] = mapped_column(String(20), nullable=False)
+	
+
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="orders_summary")
 	user: Mapped["UserDB"] = relationship(back_populates="orders_summary")
 
@@ -128,7 +144,7 @@ class DeliveryDetails(Base):
 	sec_phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
 	tracking_id: Mapped[int] = mapped_column(ForeignKey(
-		"order_tracking.id", ondelete="CASCADE", index=True))
+		"order_tracking.id", ondelete="CASCADE"), index=True, nullable=False)
 
 	track_order: Mapped["OrderTracking"] = relationship(back_populates="deliverydetails")
 

@@ -21,3 +21,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", None)
+
+# Tracking id encryption
+TRACKING_ENC_KEY = os.environ.get("TRACKING_ENC_KEY", None)
+ALPHABET_ENC = os.environ.get("ALPHABET_ENC", None)

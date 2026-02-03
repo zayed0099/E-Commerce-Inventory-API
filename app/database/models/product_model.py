@@ -1,3 +1,25 @@
+"""	
+***Explanation on how the product<-> sku <-> inventory works***
+	=> every product has a single entry on the products table
+	=> products can have multiple sku's based on its attributes
+	=> sku's can have multiple entry on the productvariant db.
+		that db also takes care of the attrubutes there too.
+		
+***Architecture explanation:
+		=> Tshirt has a entry on products db.
+		=> Tshirt has multiple entry on inventory db.
+				like : TS-BLU-42, TS-BLU-43, TS-RED-42
+		=> now Tshirt will have single/multiple entry on productvariant db
+			for its every attribuite. Here, TS-BLU-42 has two.
+			for size=42 and color=blue.
+			We store the attribuite name too in this productvariant db.
+	
+	As it stands:
+		ProductA has 
+			=> single entry on products db
+			=> single/multiple entry for its multiple version in inventory
+			=> single/multiple entry for its every version in productvariant
+"""
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, CheckConstraint
 from typing import List
@@ -17,7 +39,7 @@ class Products(Base):
 	in_stock: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 	catg_id: Mapped[int] = mapped_column(ForeignKey(
-		"categories.id", index=True))
+		"categories.id"), index=True, nullable=False)
 
 	orders: Mapped[List["Products"]] = relationship(back_populates="product")
 	
@@ -63,12 +85,18 @@ class Inventory(Base):
 	
 	sku: Mapped[str] = mapped_column(String(30), nullable=False)
 
+	"""
+	current_stock = products available after deducting from onhold 
+	on_hold = products ordered via customer but still not confirmed.
+				added to current_stock again if not confirmed after a day
+	confirmed_stock = products that were from confirmed orders
+	"""
 	current_stock: Mapped[int] = mapped_column(default=0, nullable=False)
 	on_hold: Mapped[int] = mapped_column(default=0, nullable=False)
 	confirmed_stock: Mapped[int] = mapped_column(default=0, nullable=False)
 
 	product_id: Mapped[int] = mapped_column(ForeignKey(
-		"products.id", ondelete="CASCADE", index=True))
+		"products.id", ondelete="CASCADE"), index=True, nullable=False)
 	
 	product: Mapped["Products"] = relationship(back_populates="items")
 	variants: Mapped[List["ProductVariant"]] = relationship(
@@ -86,9 +114,9 @@ class ProductVariant(Base):
 	is_archived: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
 	
 	sku_id: Mapped[int] = mapped_column(ForeignKey(
-		"inventory.id", ondelete="CASCADE", index=True))
+		"inventory.id", ondelete="CASCADE"), index=True, nullable=False)
 	product_id: Mapped[int] = mapped_column(ForeignKey(
-		"products.id", ondelete="CASCADE", index=True))
+		"products.id", ondelete="CASCADE"), index=True, nullable=False)
 
 	attribute: Mapped[str] = mapped_column(String(20), nullable=False)
 	attribute_value: Mapped[str] = mapped_column(String(30), nullable=False)
@@ -99,3 +127,8 @@ class ProductVariant(Base):
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+"""
+
+"""
