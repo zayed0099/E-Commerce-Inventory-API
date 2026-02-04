@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, CheckConstraint
+from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean, Text
 from typing import List
 from datetime import datetime
-from app.database import Base
+from app.database.db import Base
 
 class Suppliers(Base):
 	__tablename__ = "suppliers"

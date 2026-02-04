@@ -37,18 +37,18 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 			select(exists().where(
 				and_(
 					EmployeeDB.id == user_id,
-					EmployeeDB.role == role
+					EmployeeDB.role.in_("admin", role)
 				)
 			))
 		)
 		record_exists = query.scalar()
 
 		if record_exists:
-			admin_logger.info(f"User[{user_id}] logged in. Role: {role}")
+			admin_logger.info(f"User[{user_id}] logged in.")
 			return payload
 		else:
 			admin_logger.info(
-				f"Invalid Login attempt! User : {user_id}, Role: {role}")
+				f"Invalid Login attempt! User : {user_id}.")
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
 				detail="Authentication error.",

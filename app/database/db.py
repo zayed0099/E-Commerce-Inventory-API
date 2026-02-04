@@ -2,7 +2,8 @@ from sqlalchemy.ext.asyncio import (
 	create_async_engine,
 	async_sessionmaker,
 	AsyncSession)
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
+import os
 from app.core.config import DATABASE_NAME
 
 basedir = os.path.abspath(os.path.dirname(__file__))

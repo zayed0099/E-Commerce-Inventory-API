@@ -16,10 +16,10 @@ A single order can have:
 """
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, CheckConstraint
-from typing import List
+from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean, Text
+from typing import List, Union
 from datetime import datetime
-from app.database import Base
+from app.database.db import Base
 
 """
 this is mainly for internal processing of orders
@@ -74,8 +74,10 @@ class OrderTracking(Base):
 	pay_method: Mapped[str] = mapped_column(String(20), nullable=False)
 	payment_status: Mapped[str] = mapped_column(String(15), nullable=False)
 	
-	order_status: Mapped[str] = mapped_column(String(15), nullable=False)
-	delivery_status: Mapped[str] = mapped_column(String(15), nullable=False)
+	order_status: Mapped[str] = mapped_column(
+		String(15), default="placed", nullable=False)
+	delivery_status: Mapped[str] = mapped_column(
+		String(15), default="processing", nullable=False)
 
 	# Foreign Keys and Relationships
 	user_id: Mapped[int] = mapped_column(ForeignKey(
@@ -84,7 +86,7 @@ class OrderTracking(Base):
 	items: Mapped[List["OrderItem"]] = relationship(
 		back_populates="tracking", cascade="all, delete-orphan")
 
-	orders_summary: Mapped[List["OrderTrackingLink"]] = relationship(
+	orders_summary: Mapped[List["OrderSummary"]] = relationship(
 		back_populates="tracking", cascade="all, delete-orphan")
 
 	deliverydetails: Mapped["DeliveryDetails"] = relationship(
@@ -104,10 +106,8 @@ class OrderTracking(Base):
 			"delivery_status IN ('delivered', 'on_way', 'processing')", 
 			name='ck_delivery_status'),
 	)
-"""
-this is to summariaze orders
-note: i am still trying to figure out is this is really necessary or not
-"""
+
+"""This is to keep all the hashed order id from users"""
 class OrderSummary(Base):
 	__tablename__ = "ordersummary"
 

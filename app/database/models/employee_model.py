@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, CheckConstraint
-from typing import List
+from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean
+from typing import List, Union
 from datetime import datetime
-from app.database import Base
+from app.database.db import Base
 
 class EmployeeDB(Base):
 	__tablename__ = "employees"
@@ -11,7 +11,7 @@ class EmployeeDB(Base):
 
 	username: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)
 	email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-	password: Mapped[str | None] = mapped_column(String(100))
+	password: Mapped[Union[str, None]] = mapped_column(String(100))
 	role: Mapped[str] = mapped_column(String(20), default="packaging", nullable=False)
 
 	is_banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

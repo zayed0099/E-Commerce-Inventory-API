@@ -1,3 +1,13 @@
+"""
+	order management cycle in this system:
+	for "cod"
+		user places order > support staff calls the user to ask if 
+		he is confirming the order. if is_confirmed=true, then packaging dept
+		starts packaging.
+		user can deduct any product or product quantity during the confirmation call
+		with support staff. but user wont have any order editing option on the website.
+"""
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,12 +30,14 @@ order_router = APIRouter(
 
 @order_router.post("/new-order")
 async def add_new_order(
-	current_user: dict = Depends(get_current_user),
-	data: NewOrderAddress, db: AsyncSession = Depends(get_db)):
+	data: NewOrderAddress,
+	current_user: dict = Depends(get_current_user), 
+	db: AsyncSession = Depends(get_db)):
 	
-	"""order placed and info such as delivery address etc
-		then user is given a tracking id(hashed) and if user confirms the order,
-		then he can pay in advance or select COD
+	"""
+		this endpoint only takes the order> adds data to OrderTracking, OrderItem and 
+		OrderSummary > sends user hashed order tracking key(user_id, OrderTracking.id)
+		if user confirms the order,then he can pay in advance or select COD
 	"""
 	hashid = Hashids(
 		salt=TRACKING_ENC_KEY,
@@ -40,31 +52,29 @@ async def add_new_order(
 			order_status = data.order_status,
 			delivery_status = data.delivery_status)
 
-		db.add(order_tracking_id)
-		await db.refresh(order_tracking_id)
+		db.add(order_tracking_entry)
+		await db.refresh(order_tracking_entry)
 
 		user_id = current_user["user_id"]
-		tracking_id = order_tracking_id.id
+		tracking_id = order_tracking_entry.id
 		hashed_order_tracking_id = hashid.encode(user_id, tracking_id)
 		
-		(
-			for product_id, catg_id, unit_price_at_order, quantity 
-			in zip(
-				data.product_ids, 
-				data.catg_ids,
-				data.unit_price_at_order,
-				data.quantity
-			):
-				order_item_entry = OrderItem(
-					product_id=product_id,
-					catg_id=catg_id,
-					tracking_id=tracking_id,
-					quantity=quantity,
-					unit_price_at_order=unit_price_at_order)
-			
-				db.add(order_item_entry)
-				await db.refresh(order_item_entry)
-		)
+		
+		for product_id, catg_id, unit_price_at_order, quantity in zip(
+			data.product_ids, 
+			data.catg_ids,
+			data.unit_prices_at_order,
+			data.quantities
+		):
+			order_item_entry = OrderItem(
+				product_id=product_id,
+				catg_id=catg_id,
+				tracking_id=tracking_id,
+				quantity=quantity,
+				unit_price_at_order=unit_price_at_order)
+		
+			db.add(order_item_entry)
+		
 
 		order_summary_entry = OrderSummary(
 					user_id=user_id,
@@ -84,7 +94,9 @@ async def add_new_order(
 		db.add(delivery_address_entry)
 
 		await db.commit()
-		return NewOrderConfirmation(tracking_id=hashed_order_tracking_id)
+
+		modified_hashed_order_tracking_id = "OT-" + hashed_order_tracking_id 
+		return NewOrderConfirmation(tracking_id=modified_hashed_order_tracking_id)
 
 	except SQLAlchemyError as e:
 		await db.rollback()
@@ -92,8 +104,3 @@ async def add_new_order(
 			status_code=500, 
 			detail="An Database error occured.")
 
-@order_router.patch("/new-order")
-async def add_new_order(
-	current_user: dict = Depends(get_current_user),
-	data: NewOrderAddress, db: AsyncSession = Depends(get_db)):
-	pass
