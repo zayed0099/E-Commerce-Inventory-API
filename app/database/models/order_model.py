@@ -50,10 +50,14 @@ class OrderItem(Base):
 	catg_id: Mapped[int] = mapped_column(ForeignKey(
 		"categories.id", ondelete="CASCADE"), index=True, nullable=False)
 
+	sku_id: Mapped[int] = mapped_column(ForeignKey(
+		"inventory.id", ondelete="CASCADE"), index=True, nullable=True)
+
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="items")
 	product: Mapped["Products"] = relationship(back_populates="orders")
 	category: Mapped["Category"] = relationship(back_populates="orders")
-
+	variant: Mapped["Inventory"] = relationship(back_populates="orders")
+	
 	__table_args__ = (
 		CheckConstraint('quantity >= 1 AND quantity <= 200', name='ck_quantity'),
 	)

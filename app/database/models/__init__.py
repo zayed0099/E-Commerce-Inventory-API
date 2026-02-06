@@ -7,5 +7,5 @@ from .supplier_model import *
 __all__ = [
 	"EmployeeDB", "UserDB", "OrderItem", "OrderSummary", "OrderTracking", "Products",
 	"Category", "Inventory", "ProductVariant", "Suppliers", "SupplierDetails", 
-	"ProductSupplierLink"
+	"ProductSupplierLink", "DeliveryDetails"
 ]

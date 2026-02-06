@@ -4,7 +4,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from sqlalchemy import select, exists, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database.db import SessionLocal, EmployeeDB
+from app.database.db import SessionLocal
+from app.database import EmployeeDB
 from .jwt_config import security, decode_jwt
 from app.core.logging import admin_logger
 
@@ -44,7 +45,8 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 		record_exists = query.scalar()
 
 		if record_exists:
-			admin_logger.info(f"User[{user_id}] logged in.")
+			admin_logger.info(
+				f"User[id : {user_id}, role : {role}] logged in.")
 			return payload
 		else:
 			admin_logger.info(

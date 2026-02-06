@@ -80,10 +80,11 @@ class Inventory(Base):
 	__tablename__ = "inventory"
 	
 	id: Mapped[int] = mapped_column(primary_key=True)
-
 	is_archived: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
 	
 	sku: Mapped[str] = mapped_column(String(30), nullable=False)
+
+	in_stock: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 	"""
 	current_stock = products available after deducting from onhold 
@@ -101,6 +102,8 @@ class Inventory(Base):
 	product: Mapped["Products"] = relationship(back_populates="items")
 	variants: Mapped[List["ProductVariant"]] = relationship(
 		back_populates="inventory_item", cascade="all, delete-orphan")
+	orders: Mapped[List["OrderItem"]] = relationship(
+		back_populates="variant", cascade="all, delete-orphan")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
@@ -127,8 +130,3 @@ class ProductVariant(Base):
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-
-"""
-
-"""

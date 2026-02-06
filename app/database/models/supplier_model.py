@@ -69,18 +69,21 @@ class ProductSupplierLink(Base):
 	delivery_method: Mapped[str] = mapped_column(
 		default='warehouse_delivery', nullable=False)
 
+	status: Mapped[str] = mapped_column(String(10), default="placed", nullable=False)
+
 	supp_id: Mapped[int] = mapped_column(ForeignKey(
 		"suppliers.id"), nullable=False, index=True)
 	product_id: Mapped[int] = mapped_column(ForeignKey(
 		"products.id"), nullable=False, index=True)
 
+	# when the order was placed. doesnt needs to be same as created_at/updated_at
 	order_placed_at: Mapped[datetime] = mapped_column(nullable=False)
-	delivered_at: Mapped[datetime] = mapped_column(nullable=False)
+	delivered_at: Mapped[datetime] = mapped_column(nullable=True)
 
 	product: Mapped["Products"] = relationship(back_populates="supplierlink")
 	supplier: Mapped["Suppliers"] = relationship(back_populates="productlink")
 
-	# for db use
+	# when the record was created at db
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -89,6 +92,9 @@ class ProductSupplierLink(Base):
 		CheckConstraint(
 			"delivery_method IN ('warehouse_delivery', 'own_cost')", 
 			name='ck_delivery_method'),
+		CheckConstraint(
+			"status IN ('placed', 'delivered')", 
+			name='ck_supp_order_status'),
 	)
 
 

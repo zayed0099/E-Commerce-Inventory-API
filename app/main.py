@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from datetime import datetime
 from app.database.db import init_db
 from app.core.logging import admin_logger
-from app.routers.order_and_product_management import orders 
+from app.routers.order_and_product_management import orders, product_display
 
 app = FastAPI()
 current_datetime = datetime.now()
@@ -18,6 +18,7 @@ async def on_startup():
 
 # Router Management
 app.include_router(orders.order_router)
+app.include_router(product_display.product_display_router)
 
 # App Shutdown settings
 @app.on_event("shutdown")
