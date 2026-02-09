@@ -41,7 +41,7 @@ class Products(Base):
 	catg_id: Mapped[int] = mapped_column(ForeignKey(
 		"categories.id"), index=True, nullable=False)
 
-	orders: Mapped[List["Products"]] = relationship(back_populates="product")
+	orders: Mapped[List["OrderItem"]] = relationship(back_populates="product")
 	
 	category: Mapped["Category"] = relationship(back_populates="products")
 	
@@ -70,7 +70,7 @@ class Category(Base):
 		String(100), index=True, nullable=False)
 
 	products: Mapped[List["Products"]] = relationship(back_populates="category")
-	orders: Mapped[List["Products"]] = relationship(back_populates="category")
+	orders: Mapped[List["OrderItem"]] = relationship(back_populates="category")
 	
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(

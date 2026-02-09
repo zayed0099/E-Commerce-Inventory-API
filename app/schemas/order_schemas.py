@@ -3,10 +3,11 @@ from datetime import datetime
 from typing import Any, Optional, List
 from .base_schemas import APIResponse
 
-class OrderProduct(NewOrder):
+class OrderProduct(BaseModel):
 	""" *OrderItem part """
 	product_id: int
 	catg_id: int
+	sku_id: int
 	quantity: int
 	unit_price_at_order: float
 
@@ -23,8 +24,7 @@ class OrderProduct(NewOrder):
 			raise ValueError("0/Negative Values can't be accepted.")
 		
 		return v
-
-
+		
 class NewOrder(BaseModel):
 	"""
 	Order creation cycle : OrderTracking => OrderItem => OrderSummary
@@ -51,10 +51,10 @@ class NewOrder(BaseModel):
 		if not items or len(items) == 0:
 			raise ValueError("Items can't be empty.")
 
-		if pay_method == "cod" and payment_status != "unpaid"
+		if pay_method == "cod" and payment_status != "unpaid":
 			raise ValueError("Incorrect payment_status.")
 
-		if pay_method in ["bkash", "gateway"] and payment_status != "paid"
+		if pay_method in ["bkash", "gateway"] and payment_status != "paid":
 			raise ValueError("Incorrect payment_status.")
 		
 		return v

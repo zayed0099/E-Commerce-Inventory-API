@@ -12,7 +12,7 @@ class ProductAttribute(BaseModel):
 class ProductVariant(BaseModel):
 	sku : str
 	sku_id: int
-	in_stock: bool
+	in_stock: bool = Field(alias="variant_in_stock")
 
 	attributes: List[ProductAttribute]
 	

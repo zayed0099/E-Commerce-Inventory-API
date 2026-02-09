@@ -96,7 +96,7 @@ class OrderTracking(Base):
 	deliverydetails: Mapped["DeliveryDetails"] = relationship(
 		back_populates="track_order", cascade="all, delete-orphan")
 	
-	user: Mapped["UserDB"] = relationship(back_populates="track_order")
+	user: Mapped["UserDB"] = relationship(back_populates="track_orders")
 
 	__table_args__ = (
 		CheckConstraint(

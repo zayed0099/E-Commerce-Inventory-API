@@ -15,6 +15,7 @@ admin_logger.propagate = False   # to not send messages up to root
 
 # --- sqlalchemy logger
 sqlalchemy_logger = logging.getLogger("sqlalchemy.orm")
+# sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")
 sqlalchemy_handler = logging.FileHandler("logs/sqlalchemy.log")
 sqlalchemy_formatter = logging.Formatter(
     "%(asctime)s - %(levelname)s - %(name)s - %(message)s"

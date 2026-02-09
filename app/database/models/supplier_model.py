@@ -21,8 +21,8 @@ class Suppliers(Base):
 
 	details: Mapped["SupplierDetails"] = relationship(
 		back_populates="supplier", cascade="all, delete-orphan")
-	product_link: Mapped[List["ProductSupplierLink"]] = relationship(
-		back_populates="productlink")
+	productlink: Mapped[List["ProductSupplierLink"]] = relationship(
+		back_populates="supplier")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(

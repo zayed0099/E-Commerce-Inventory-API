@@ -16,13 +16,11 @@ from app.schemas import SingleProductData
 
 product_display_router = APIRouter(
 	prefix=f"{API_VERSION}/products",
-	dependencies=[Depends(get_current_user)],
 	tags=["product_display"])
 
 @product_display_router.get("/{product_id}", response_model=SingleProductData)
 async def single_product_display(
-	product_id: int,
-	# current_user: dict = Depends(get_current_user), 
+	product_id: int, 
 	db: AsyncSession = Depends(get_db)):
 	
 	q = (
@@ -38,7 +36,7 @@ async def single_product_display(
 			Inventory.in_stock.label("variant_in_stock"),
 			ProductVariant.attribute,
 			ProductVariant.attribute_value
-
+		)
 			.join(
 				Category,
 				Category.id == Products.catg_id,
@@ -57,18 +55,17 @@ async def single_product_display(
 			.where(
 				and_(
 					Products.id == product_id,
-					Products.is_archived == False
-				)
+					Products.is_archived.is_(False)
+					)
 			)
-		)
 	)
-	product = await (db.execute(q)).all()
+	product = (await db.execute(q)).all()
 
 	if not product:
 		raise HTTPException(status_code=404, detail="Item not found")
 
 	product_dict = None
-	variants_map = []
+	variants_map = {}
 
 	for row in product:
 		if product_dict is None:
@@ -88,7 +85,7 @@ async def single_product_display(
 			variants_map[row.sku] = {
 				"sku": row.sku,
 				"sku_id": row.inventory_sku_id,
-				"in_stock": row.variant_in_stock,
+				"variant_in_stock": row.variant_in_stock,
 				"attributes": []
 			}
 
