@@ -7,12 +7,12 @@ from typing import List
 from datetime import datetime, timedelta
 from hashids import Hashids
 # Local Import
+from app.utils import paginated_data_count
 from app.database.db import get_db
 from app.database import (
 	Products, Category, Inventory, ProductVariant)
-from app.core.jwt_setup import get_current_user
 from app.core.config import API_VERSION
-from app.schemas import SingleProductData
+from app.schemas import SingleProductData, MultipleProductData
 
 product_display_router = APIRouter(
 	prefix=f"{API_VERSION}/products",
@@ -86,16 +86,71 @@ async def single_product_display(
 				"sku": row.sku,
 				"sku_id": row.inventory_sku_id,
 				"variant_in_stock": row.variant_in_stock,
-				"attributes": []
+				"attributes": {}
 			}
 
 		if row.attribute is not None:
-			variants_map[row.sku]["attributes"].append({
-				"attribute": row.attribute,
-				"attribute_value": row.attribute_value
-			})
+			variants_map[row.sku]["attributes"][row.attribute] = row.attribute_value
 
 	product_dict["variants"] = list(variants_map.values())
 
 	response = SingleProductData(**product_dict)
+	return response
+
+@product_display_router.get("/", response_model=MultipleProductData)
+async def multiple_product_display(
+	page: int=1, per_page:int=10,
+	db: AsyncSession = Depends(get_db)):
+	
+	total_data, total_page = (
+		await paginated_data_count(
+			db = db, 
+			db_table = Products,
+			per_page = per_page,  
+			is_archived_check = True
+		)
+	)
+	
+	offset = (page - 1) * per_page
+
+	q = (
+		select(
+			Products.id, 
+			Products.product_name, 
+			Products.image_link, 
+			Products.current_price, 
+			Products.catg_id,
+			Products.in_stock,
+		)
+		.where(Products.is_archived.is_(False))
+		.order_by(Products.id)
+		.limit(per_page)
+		.offset(offset)
+	)
+	products = (await db.execute(q)).all()
+
+	if not products:
+		raise HTTPException(status_code=404, detail="Item not found")
+
+	data_to_send = {
+		"page" : page,
+		"per_page" : per_page,
+		"total_data" : total_data,
+		"total_page" : total_page,
+		"products" : []
+	}
+
+	for p in products:
+		product_details = {
+			"product_id" : p.id,
+			"catg_id" : p.catg_id,
+			"product_name" : p.product_name,
+			"image_link" : p.image_link,
+			"current_price" : p.current_price,
+			"in_stock" : p.in_stock,
+			"url" : f"{API_VERSION}/products/{p.id}" 
+		}
+		data_to_send["products"].append(product_details)
+
+	response = MultipleProductData(**data_to_send)
 	return response
