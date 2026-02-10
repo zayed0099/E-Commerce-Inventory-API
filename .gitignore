@@ -1,5 +1,5 @@
 # temporarily ignoring auth files. to be rebult later
-routers/auth/
+app/routers/auth/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
