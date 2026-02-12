@@ -39,5 +39,5 @@ uvicorn_error_logger = logging.getLogger("uvicorn.error")
 uvicorn_error_handler = logging.FileHandler("logs/error.log")
 uvicorn_error_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 uvicorn_error_logger.addHandler(uvicorn_error_handler)
-uvicorn_error_logger.setLevel(logging.INFO)
+uvicorn_error_logger.setLevel(logging.DEBUG)
 uvicorn_error_logger.propagate = False

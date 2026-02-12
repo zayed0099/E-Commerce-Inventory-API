@@ -9,6 +9,9 @@ from app.core.config import DATABASE_NAME
 basedir = os.path.abspath(os.path.dirname(__file__))
 DATABASE_URL = f"sqlite+aiosqlite:///{os.path.join(basedir, DATABASE_NAME)}"
 
+# sync db url, for alembic
+SYNC_ALEMBIC_DB_URL = f"sqlite:///{os.path.join(basedir, DATABASE_NAME)}"
+
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 SessionLocal = async_sessionmaker(
 	engine,

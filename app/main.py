@@ -5,7 +5,7 @@ from datetime import datetime
 from app.database.db import init_db
 from app.core.logging import admin_logger
 from app.routers.order_and_product_management import orders, product_display
-from app.routers.auth import social_auth
+from app.routers.auth import credentials_auth
 
 app = FastAPI()
 current_datetime = datetime.now()
@@ -18,9 +18,9 @@ async def on_startup():
 	# start_scheduler(app)
 
 # Router Management
-app.include_router(orders.order_router)
+app.include_router(credentials_auth.auth_router)
 app.include_router(product_display.product_display_router)
-app.include_router(social_auth.social_auth_router)
+app.include_router(orders.order_router)
 
 # App Shutdown settings
 @app.on_event("shutdown")
@@ -29,9 +29,9 @@ def shutdown_event():
 
 if __name__ == "__main__":
 	uvicorn.run(
-		"main:app", 
+		"main:app",
 		host="0.0.0.0", 
-		port=8000, 
+		port=8000,
 		log_level="info",
 		reload=True
 	)

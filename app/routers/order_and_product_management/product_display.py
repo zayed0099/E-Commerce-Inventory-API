@@ -99,7 +99,7 @@ async def single_product_display(
 
 @product_display_router.get("/", response_model=MultipleProductData)
 async def multiple_product_display(
-	page: int=1, per_page:int=10,
+	page: int = 1, per_page: int = 10,
 	db: AsyncSession = Depends(get_db)):
 	
 	total_data, total_page = (

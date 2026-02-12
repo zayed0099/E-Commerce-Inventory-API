@@ -48,14 +48,15 @@ async def add_new_order(
 	"""
 
 	try:
+		user_id = current_user["user_id"]
 		order_tracking_entry = OrderTracking(
 				pay_method = data.pay_method,
-				payment_status = data.payment_status)
+				payment_status = data.payment_status,
+				user_id=user_id)
 
 		db.add(order_tracking_entry)
-		await db.refresh(order_tracking_entry)
+		await db.flush()
 
-		user_id = current_user["user_id"]
 		tracking_id = order_tracking_entry.id
 		hashed_order_tracking_id = hashid.encode(user_id, tracking_id)
 		
@@ -69,7 +70,6 @@ async def add_new_order(
 				unit_price_at_order=product.unit_price_at_order)
 		
 			db.add(order_item_entry)
-		
 
 		order_summary_entry = OrderSummary(
 				user_id=user_id,
@@ -95,6 +95,7 @@ async def add_new_order(
 
 	except SQLAlchemyError as e:
 		await db.rollback()
+		print(e)
 		raise HTTPException(
 			status_code=500, 
 			detail="An Database error occured.")
