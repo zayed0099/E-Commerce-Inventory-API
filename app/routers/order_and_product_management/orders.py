@@ -19,10 +19,11 @@ from hashids import Hashids
 # Local Import
 from app.database.db import get_db
 from app.database import (
-	OrderTracking, OrderItem, OrderSummary, DeliveryDetails)
+	Inventory, OrderTracking, OrderItem, OrderSummary, DeliveryDetails)
 from app.core.jwt_setup import get_current_user
 from app.core.config import API_VERSION, TRACKING_ENC_KEY, ALPHABET_ENC
 from app.schemas import NewOrder, NewOrderConfirmation
+from app.utils.stock_management_for_orders import check_product_availability
 
 order_router = APIRouter(
 	prefix=f"{API_VERSION}/orders",
@@ -61,12 +62,29 @@ async def add_new_order(
 		hashed_order_tracking_id = hashid.encode(user_id, tracking_id)
 		
 		for product in data.items:
+			quantity = product.quantity
+			product_id = product.product_id
+			sku_id = product.sku_id
+
+			is_product_available = check_product_availability( 
+				inventory_db=Inventory,
+				db=db,
+				quantity=quantity,
+				product_id=product_id,
+				sku_id=sku_id
+			):
+
+			if not is_product_available:
+				raise HTTPException(
+					status_code=500, 
+					detail="Product Out of Stock.")
+
 			order_item_entry = OrderItem(
 				tracking_id=tracking_id,
-				product_id=product.product_id,
-				sku_id=product.sku_id,
+				product_id=product_id,
+				sku_id=sku_id,
 				catg_id=product.catg_id,
-				quantity=product.quantity,
+				quantity=quantity,
 				unit_price_at_order=product.unit_price_at_order)
 		
 			db.add(order_item_entry)
