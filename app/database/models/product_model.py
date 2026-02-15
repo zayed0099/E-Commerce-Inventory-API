@@ -92,18 +92,23 @@ class Inventory(Base):
 				added to current_stock again if not confirmed after a day
 	confirmed_stock = products that were from confirmed orders
 	"""
-	current_stock: Mapped[int] = mapped_column(default=0, nullable=False)
-	on_hold: Mapped[int] = mapped_column(default=0, nullable=False)
-	confirmed_stock: Mapped[int] = mapped_column(default=0, nullable=False)
+	current_product_stock: Mapped[int] = mapped_column(default=0, nullable=False)
+	product_stock_on_hold: Mapped[int] = mapped_column(default=0, nullable=False)
+	confirmed_product_stock: Mapped[int] = mapped_column(default=0, nullable=False)
 
 	product_id: Mapped[int] = mapped_column(ForeignKey(
 		"products.id", ondelete="CASCADE"), index=True, nullable=False)
 	
 	product: Mapped["Products"] = relationship(back_populates="items")
+	
 	variants: Mapped[List["ProductVariant"]] = relationship(
 		back_populates="inventory_item", cascade="all, delete-orphan")
+	
 	orders: Mapped[List["OrderItem"]] = relationship(
 		back_populates="variant", cascade="all, delete-orphan")
+
+	reserve_stock: Mapped[List["ReserveStock"]] = relationship(
+		back_populates="inventory_item", cascade="all, delete-orphan")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(

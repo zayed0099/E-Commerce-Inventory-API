@@ -26,3 +26,4 @@ class UserDB(Base):
 
 	track_orders: Mapped[List["OrderTracking"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")
+

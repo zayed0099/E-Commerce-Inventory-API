@@ -35,10 +35,6 @@ class OrderItem(Base):
 	
 	is_processed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 	is_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
-	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
-	updated_at: Mapped[datetime] = mapped_column(
-		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 	
 	# Foreign Keys and Relationships
 	tracking_id: Mapped[int] = mapped_column(ForeignKey(
@@ -58,6 +54,10 @@ class OrderItem(Base):
 	category: Mapped["Category"] = relationship(back_populates="orders")
 	variant: Mapped["Inventory"] = relationship(back_populates="orders")
 	
+	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+	updated_at: Mapped[datetime] = mapped_column(
+		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
 	__table_args__ = (
 		CheckConstraint('quantity >= 1 AND quantity <= 200', name='ck_quantity'),
 	)
@@ -97,14 +97,19 @@ class OrderTracking(Base):
 		back_populates="track_order", cascade="all, delete-orphan")
 	
 	user: Mapped["UserDB"] = relationship(back_populates="track_orders")
+	stockreserve: Mapped["ReserveStock"] = relationship(back_populates="tracking")
 
+	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+	updated_at: Mapped[datetime] = mapped_column(
+		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+	
 	__table_args__ = (
 		CheckConstraint(
 			"pay_method IN ('cod', 'bkash', 'gateway')", name='ck_pay_method'),
 		CheckConstraint(
 			"payment_status IN ('paid', 'unpaid')", name='ck_pay_status'),
 		CheckConstraint(
-			"order_status IN ('placed', 'confirmed', 'cancelled')", 
+			"order_status IN ('creating', 'placed', 'confirmed', 'cancelled')", 
 			name='ck_order_status'),
 		CheckConstraint(
 			"delivery_status IN ('delivered', 'on_way', 'processing')", 
@@ -129,7 +134,45 @@ class OrderSummary(Base):
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="orders_summary")
 	user: Mapped["UserDB"] = relationship(back_populates="orders_summary")
 
+	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+	updated_at: Mapped[datetime] = mapped_column(
+		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+
+class ReserveStock(Base):
+	__tablename__ = "reservestock"
+
+	id: Mapped[int] = mapped_column(primary_key=True)
+
+	status: Mapped[str] = mapped_column(
+		String(15), default="processing", nullable=False)
+
+	quantity: Mapped[int] = mapped_column(nullable=False)
+
+	expires_at : Mapped[int] = mapped_column(nullable=False)
+
+	# Foreign keys and relationships
+	tracking_id: Mapped[int] = mapped_column(ForeignKey(
+		"order_tracking.id", ondelete="CASCADE"), index=True, nullable=False)
+
+	sku_id: Mapped[int] = mapped_column(ForeignKey(
+		"inventory.id", ondelete="CASCADE"), index=True, nullable=False)	
+
+	tracking: Mapped["OrderTracking"] = relationship(back_populates="stockreserve")
+
+	inventory_item: Mapped["Inventory"] = relatinonship(back_populates="reserve_stock")
+
+	# db entry management
+	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+	updated_at: Mapped[datetime] = mapped_column(
+		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+	__table_args__ = (
+		CheckConstraint(
+			"status IN ('pending', 'confirmed', 'cancelled', 'expired')", 
+			name='ck_reservation_status'),
+	)
+	
 """
 Table to keep all delivery details of orders
 a one<->one relatinonship with tracking table
