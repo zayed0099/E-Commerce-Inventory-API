@@ -1,5 +1,7 @@
 # temporarily ignoring auth files. to be rebult later
 app/routers/auth/
+*.db-wal
+*.db-shm
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
