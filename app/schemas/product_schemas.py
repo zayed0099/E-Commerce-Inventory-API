@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Any, Optional, Union, List, Dict
 
@@ -8,8 +8,7 @@ class ProductAttribute(BaseModel):
 	name: str = Field(alias="attribute")
 	value: str = Field(alias="attribute_value")
 
-	class Config:
-		orm_mode = True
+	model_config = ConfigDict(from_attributes=True)
 """
 
 class ProductVariant(BaseModel):
@@ -19,8 +18,7 @@ class ProductVariant(BaseModel):
 
 	attributes: Dict[str, Union[str, int, float]]
 	
-	class Config:
-		orm_mode = True
+	model_config = ConfigDict(from_attributes=True)
 	
 class SingleProductData(BaseModel):
 	catg_id: int
@@ -35,8 +33,7 @@ class SingleProductData(BaseModel):
 
 	variants: List[ProductVariant]
 	
-	class Config:
-		orm_mode = True
+	model_config = ConfigDict(from_attributes=True)
 
 # Schema for multiple Products
 class ShortSingleProductData(BaseModel):

@@ -1,8 +1,9 @@
 # utils.py
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists, func
 from sqlalchemy.exc import SQLAlchemyError
 from math import ceil
+from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
 
 async def paginated_data_count(
 	db: AsyncSession,

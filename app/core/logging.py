@@ -13,6 +13,16 @@ admin_logger.addHandler(admin_handler)
 admin_logger.setLevel(logging.INFO)
 admin_logger.propagate = False   # to not send messages up to root
 
+# --- order logger
+order_logger = logging.getLogger("myapp.order")
+order_handler = logging.FileHandler("logs/order.log")
+order_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+order_handler.setFormatter(order_formatter)
+order_logger.addHandler(order_handler)
+order_logger.setLevel(logging.INFO)
+order_logger.propagate = False   # to not send messages up to root
+
 # --- sqlalchemy logger
 sqlalchemy_logger = logging.getLogger("sqlalchemy.orm")
 # sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")

@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select, exists
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import and_
 from typing import List
 from datetime import datetime, timedelta
 from hashids import Hashids
+
 # Local Import
 from app.utils import paginated_data_count
 from app.database.db import get_db
+from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
 from app.database import (
 	Products, Category, Inventory, ProductVariant)
 from app.core.config import API_VERSION

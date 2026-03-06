@@ -160,7 +160,7 @@ class ReserveStock(Base):
 
 	tracking: Mapped["OrderTracking"] = relationship(back_populates="stockreserve")
 
-	inventory_item: Mapped["Inventory"] = relatinonship(back_populates="reserve_stock")
+	inventory_item: Mapped["Inventory"] = relationship(back_populates="reserve_stock")
 
 	# db entry management
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)

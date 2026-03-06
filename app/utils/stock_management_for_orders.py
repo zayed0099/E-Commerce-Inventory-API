@@ -1,5 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, exists, func, update, case
+# from sqlalchemy.ext.asyncio import AsyncSession
+from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
+
+from sqlalchemy import select, exists, func, update, case, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 	
@@ -19,7 +21,7 @@ async def check_product_availability(
 		it checks if quantity is equal or lower than current stock
 		then updates the data > when another req comes it gets latest stock
 	"""
-	
+
 	try:
 		update_query = (
 			update(inventory_db)
@@ -53,4 +55,32 @@ async def check_product_availability(
 			status_code=500, 
 			detail="An Database error occured.")
 
-	
+async def release_reserved_stocks(
+		reservation_db,
+		db: AsyncSession,
+		tracking_id: int
+	):
+
+	try:
+		stmt = (
+			select(reservation_db)
+			.where(reservation_db.tracking_id == tracking_id)
+			.options(joinedload(reservation_db.inventory_item)) 
+		)
+	reserved_stocks = await (db.execute(stmt)).scalars().all()
+
+	for data in reserved_stocks:
+		data.inventory_item.current_product_stock += data.quantity
+		data.inventory_item.product_stock_on_hold -= data.quantity
+		data.status = "cancelled"
+		
+		order_logger.info(
+			f"{data.quantity} products[order tracking id : {tracking_id}] have been released from hold.")
+
+	return True
+
+	except SQLAlchemyError as e:
+		await db.rollback()
+		order_logger.info(
+			f"An error occured while releasing stock for failed order[tracking_id: {tracking_id}]")
+				

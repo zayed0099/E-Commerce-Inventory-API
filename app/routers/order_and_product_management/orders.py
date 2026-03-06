@@ -10,7 +10,7 @@
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select, exists
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import and_
 from typing import List
@@ -18,12 +18,18 @@ from datetime import datetime, timedelta
 from hashids import Hashids
 # Local Import
 from app.database.db import get_db
+from app.database.db_for_old_pc import (
+	PentiumAsyncSession as AsyncSession,
+	SessionLocalSync as SessionLocal
+)
 from app.database import (
 	Inventory, OrderTracking, OrderItem, OrderSummary, DeliveryDetails)
+from app.core.logging import admin_logger
 from app.core.jwt_setup import get_current_user
 from app.core.config import API_VERSION, TRACKING_ENC_KEY, ALPHABET_ENC
 from app.schemas import NewOrder, NewOrderConfirmation
-from app.utils.stock_management_for_orders import check_product_availability
+from app.utils.stock_management_for_orders import (
+	check_product_availability, release_reserved_stocks)
 
 order_router = APIRouter(
 	prefix=f"{API_VERSION}/orders",
@@ -50,10 +56,13 @@ async def add_new_order(
 
 	try:
 		user_id = current_user["user_id"]
+		tracking_id = None
+
 		order_tracking_entry = OrderTracking(
 				pay_method = data.pay_method,
 				payment_status = data.payment_status,
-				user_id=user_id)
+				user_id=user_id,
+				order_status='creating')
 
 		db.add(order_tracking_entry)
 		await db.flush()
@@ -66,13 +75,13 @@ async def add_new_order(
 			product_id = product.product_id
 			sku_id = product.sku_id
 
-			is_product_available = check_product_availability( 
+			is_product_available = await check_product_availability( 
 				inventory_db=Inventory,
 				db=db,
 				quantity=quantity,
 				product_id=product_id,
 				sku_id=sku_id
-			):
+			)
 
 			if not is_product_available:
 				raise HTTPException(
@@ -113,8 +122,32 @@ async def add_new_order(
 
 	except SQLAlchemyError as e:
 		await db.rollback()
-		print(e)
+		 
+		 # updating the tracking status using 
+		 if tracking_id is not None:
+			try:
+				async with SessionLocal() as new_session:
+					async with new_session.begin():
+						tracking_query = (
+							update(OrderTracking)
+							.where(OrderTracking.id == tracking_id)
+							.values(
+								status = 'cancelled'
+						))
+						tracking_update = await new_session.execute(tracking_query) 
+							 
+					release_stocks = await release_reserved_stocks(
+						reservation_db=ReserveStock,
+						db=new_session,
+						tracking_id=tracking_id
+					)
+
+			except SQLAlchemyError:
+				admin_logger.info(
+					f"Order Tracking(id:{tracking_id}) status update to 'cancelled' failed."
+				)
+				 
 		raise HTTPException(
 			status_code=500, 
-			detail="An Database error occured.")
+			detail="Order Cancelled because of an database error.")
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, root_validator, Field
+from pydantic import BaseModel, model_validator, Field
 from datetime import datetime
 from typing import Any, Optional, List
 from .base_schemas import APIResponse
@@ -11,7 +11,7 @@ class OrderProduct(BaseModel):
 	quantity: int
 	unit_price_at_order: float
 
-	@root_validator
+	@model_validator(mode="after")
 	def no_null_value(cls, v):
 		product_id = v.get("product_id")
 		catg_id = v.get("catg_id")
@@ -42,7 +42,7 @@ class NewOrder(BaseModel):
 	
 	items: List[OrderProduct]
 
-	@root_validator
+	@model_validator(mode="after")
 	def order_validator(cls, v):
 		pay_method = v.get("pay_method")
 		payment_status = v.get("payment_status")
