@@ -1,7 +1,8 @@
 # from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
 
-from sqlalchemy import select, exists, func, update, case, joinedload
+from sqlalchemy import select, exists, func, update
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 	
@@ -67,17 +68,17 @@ async def release_reserved_stocks(
 			.where(reservation_db.tracking_id == tracking_id)
 			.options(joinedload(reservation_db.inventory_item)) 
 		)
-	reserved_stocks = await (db.execute(stmt)).scalars().all()
+		reserved_stocks = await (db.execute(stmt)).scalars().all()
 
-	for data in reserved_stocks:
-		data.inventory_item.current_product_stock += data.quantity
-		data.inventory_item.product_stock_on_hold -= data.quantity
-		data.status = "cancelled"
-		
-		order_logger.info(
-			f"{data.quantity} products[order tracking id : {tracking_id}] have been released from hold.")
+		for data in reserved_stocks:
+			data.inventory_item.current_product_stock += data.quantity
+			data.inventory_item.product_stock_on_hold -= data.quantity
+			data.status = "cancelled"
+			
+			order_logger.info(
+				f"{data.quantity} products[order tracking id : {tracking_id}] have been released from hold.")
 
-	return True
+		return True
 
 	except SQLAlchemyError as e:
 		await db.rollback()

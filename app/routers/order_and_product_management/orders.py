@@ -24,7 +24,7 @@ from app.database.db_for_old_pc import (
 )
 from app.database import (
 	Inventory, OrderTracking, OrderItem, OrderSummary, DeliveryDetails)
-from app.core.logging import admin_logger
+from app.core.logging import admin_logger, order_logger
 from app.core.jwt_setup import get_current_user
 from app.core.config import API_VERSION, TRACKING_ENC_KEY, ALPHABET_ENC
 from app.schemas import NewOrder, NewOrderConfirmation
@@ -68,6 +68,12 @@ async def add_new_order(
 		await db.flush()
 
 		tracking_id = order_tracking_entry.id
+		
+		if not isinstance(tracking_id, int):
+			raise HTTPException(
+				status_code=500,
+				detail="An error occured with Tracking ID generation.")
+
 		hashed_order_tracking_id = hashid.encode(user_id, tracking_id)
 		
 		for product in data.items:
@@ -117,14 +123,27 @@ async def add_new_order(
 
 		await db.commit()
 
-		modified_hashed_order_tracking_id = "OT-" + hashed_order_tracking_id 
-		return NewOrderConfirmation(tracking_id=modified_hashed_order_tracking_id)
+		if tracking_id is not None:
+			try:
+				tracking_query = (
+					update(OrderTracking)
+					.where(OrderTracking.id == tracking_id)
+					.values(
+						status = 'placed'
+					))
+				tracking_update = await new_session.execute(tracking_query)
 
-	except SQLAlchemyError as e:
+			except SQLAlchemyError:
+				order_logger.info(f"Tracking_id: {tracking_id}, status update to 'placed' failed.")
+
+		return NewOrderConfirmation(tracking_id=hashed_order_tracking_id)
+
+	except (SQLAlchemyError, HTTPException) as er:
 		await db.rollback()
-		 
-		 # updating the tracking status using 
-		 if tracking_id is not None:
+		print(er)
+
+		# updating the tracking status
+		if tracking_id is not None:
 			try:
 				async with SessionLocal() as new_session:
 					async with new_session.begin():
@@ -142,12 +161,13 @@ async def add_new_order(
 						tracking_id=tracking_id
 					)
 
-			except SQLAlchemyError:
-				admin_logger.info(
-					f"Order Tracking(id:{tracking_id}) status update to 'cancelled' failed."
+			except Exception as e:
+				order_logger.info(
+					f"Order Tracking(id:{tracking_id}) status update to 'cancelled' and stock release failed."
 				)
+				print(e)
 				 
 		raise HTTPException(
-			status_code=500, 
-			detail="Order Cancelled because of an database error.")
+			status_code=400, 
+			detail="Order Cancelled because of an error.")
 

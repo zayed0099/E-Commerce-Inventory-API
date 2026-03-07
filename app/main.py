@@ -2,7 +2,8 @@ import uvicorn
 from fastapi import FastAPI
 #from starlette.middleware.sessions import SessionMiddleware
 from datetime import datetime
-from app.database.db import init_db
+# from app.database.db import init_db
+from app.database.db_for_old_pc import init_db
 from app.core.logging import admin_logger
 from app.routers.order_and_product_management import orders, product_display
 # from app.routers.auth import credentials_auth

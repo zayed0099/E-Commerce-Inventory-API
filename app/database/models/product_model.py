@@ -24,7 +24,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean, Text
 from typing import List
 from datetime import datetime
-from app.database.db import Base
+# from app.database.db import Base
+from app.database.db_for_old_pc import Base
 
 class Products(Base):
 	__tablename__ = "products"

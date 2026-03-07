@@ -19,8 +19,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean, Text
 from typing import List, Union
 from datetime import datetime
-from app.database.db import Base
-
+# from app.database.db import Base
+from app.database.db_for_old_pc import Base
 """
 this is mainly for internal processing of orders
 orders are processed in packaging using this model
