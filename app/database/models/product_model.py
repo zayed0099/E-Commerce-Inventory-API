@@ -32,6 +32,9 @@ class Products(Base):
 	
 	id: Mapped[int] = mapped_column(primary_key=True)
 	is_archived: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
+	is_entry_complete: Mapped[bool] = mapped_column(default=False, nullable=False)
+
+	root_str: Mapped[str] = mapped_column(String(4), nullable=False)
 
 	product_name: Mapped[str] = mapped_column(String(100), nullable=False)
 	short_desc: Mapped[str] = mapped_column(Text(255), nullable=False)

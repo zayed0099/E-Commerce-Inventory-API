@@ -1,0 +1,205 @@
+from fastapi import HTTPException, status, Depends
+from sqlalchemy import select, exists
+# from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql import and_
+from typing import List
+from datetime import datetime, timedelta
+from hashids import Hashids
+
+# Local Import
+# from app.database.db import get_db
+from .router import product_mgmt_router
+from app.core.employee_jwt_setup import stock_manager_required
+from app.database.db_for_old_pc import (
+	get_db, PentiumAsyncSession as AsyncSession)
+from app.database import (
+	Products, Category, Inventory, Suppliers, 
+	ProductVariant, SupplierDetails, ProductSupplierLink)
+from app.schemas import (
+	SupplierEntry, SingleProductDataEntry, ProductVariantEntry, APIResponse)
+from app.core.logging import admin_logger
+
+root_str_enc = Hashids(
+	salt="productentry",
+	min_length=4,
+	alphabet="QWERTYUOPADFGHJKLMNBVCXZ246789"
+)
+
+@product_mgmt_router.post("/product/new", response_model=APIResponse)
+async def add_new_product(
+	data: SingleProductDataEntry,
+	current_user: dict = Depends(stock_manager_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	user_id = current_user["user_id"]
+
+	product_name = data.product_name
+	short_desc = data.short_desc
+	image_link = data.image_link
+	current_price = data.current_price
+	in_stock = data.in_stock
+	supplier_id = data.supplier_id
+	catg_id = data.catg_id
+	
+	#  root_str encoding will be done later
+	catg_check = await db.scalar(
+		select(exists().where(Category.id == catg_id)
+	))
+
+	if not catg_check:
+		raise HTTPException(
+			status_code=400, 
+			detail="Category doesn't exists.")
+
+	if supplier_id is not None:
+		supp_check = await db.scalar(
+			select(exists().where(Suppliers.id == supplier_id)
+		))
+
+		if not supp_check:
+			raise HTTPException(
+				status_code=400, 
+				detail="Invalid Supplier ID.")
+
+	try:
+		new_product_entry = Products(
+				is_entry_complete=False,
+				product_name=product_name,
+				short_desc=short_desc,
+				image_link=image_link,
+				current_price=current_price,
+				in_stock=in_stock,
+				catg_id=catg_id
+			)
+
+		db.add(new_product_entry)
+		await db.commit()
+
+		p_id = new_product_entry.id
+
+		admin_logger.info(
+			f"[PRODUCT_ENTRY]-> product_id: {p_id}, user_id: {user_id}")
+
+		return APIResponse(message="Product entry successful.")
+
+	except SQLAlchemyError as er:
+		await db.rollback()
+		print(er)
+				 
+		raise HTTPException(
+			status_code=400, 
+			detail="Product entry failed because of an error.")
+
+@product_mgmt_router.post("/product/add-variant", response_model=APIResponse)
+async def add_product_variant(
+	data: ProductVariantEntry,
+	current_user: dict = Depends(stock_manager_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	user_id = current_user["user_id"]
+
+	# sku will be created in the frontend
+	sku = data.sku
+	in_stock = data.in_stock
+	current_product_stock = data.current_product_stock
+	product_id = data.product_id
+	attributes = data.attributes
+
+	try:
+		new_variant_entry = ProductVariant(
+				sku=sku,
+				in_stock=in_stock,
+				current_product_stock=current_product_stock,
+				product_id = product_id
+			)
+		db.add(new_variant_entry)
+		await db.flush()
+
+		sku_id = new_variant_entry.id
+
+		for key, value in attributes.items():
+			new_attr_entry = ProductVariant(
+					sku_id = sku_id,
+					product_id = product_id,
+					attribute = key,
+					attribute_value = value
+				)
+			db.add(new_attr_entry)
+
+		await db.commit()
+
+		admin_logger.info(
+			f"[PRODUCT_VARIANT_ENTRY]-> sku_id: {sku_id}, user_id: {user_id}")
+
+		return APIResponse(message="Product Variant entry successful.")
+
+
+	except SQLAlchemyError as er:
+		await db.rollback()
+		print(er)
+				 
+		raise HTTPException(
+			status_code=400, 
+			detail="Product variant entry failed because of an error.")
+
+
+@product_mgmt_router.post("/supplier/new", response_model=APIResponse)
+async def add_new_supplier(
+	data: SupplierEntry,
+	current_user: dict = Depends(stock_manager_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	user_id = current_user["user_id"]
+
+	supp_name = data.name
+	email = data.email
+	phone = data.phone
+	is_supplying = data.is_supplying
+	supp_type = data.supp_type
+
+	address_line = data.address_line
+	postal_code = data.postal_code
+	city = data.city
+	country = data.country
+
+	sec_email = data.sec_email
+	sec_phone = data.sec_phone
+
+	try:
+		new_supplier = Suppliers(
+				name = supp_name,
+				email = email,
+				phone = phone,
+				is_supplying = is_supplying,
+				supp_type = supp_type
+			)
+		db.add(new_supplier)
+		await db.flush()
+
+		supp_id = new_supplier.id
+
+		supplier_details = SupplierDetails(
+				address_line = address_line,
+				postal_code = postal_code,
+				city = city,
+				country = country,
+				sec_email = sec_email,
+				sec_phone = sec_phone,
+				supp_id = supp_id
+			)
+
+		await db.commit()
+
+		admin_logger.info(
+			f"[SUPPLIER_ENTRY]-> supp_id: {supp_id}, user_id: {user_id}")
+
+		return APIResponse(message="Supplier and SupplierDetails entry successful.")
+
+	except SQLAlchemyError as er:
+		await db.rollback()
+		print(er)
+				 
+		raise HTTPException(
+			status_code=400, 
+			detail="Product entry failed because of an error.")

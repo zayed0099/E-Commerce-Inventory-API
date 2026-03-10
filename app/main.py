@@ -7,6 +7,7 @@ from app.database.db_for_old_pc import init_db
 from app.core.logging import admin_logger
 from app.routers.order_and_product_management import orders, product_display
 # from app.routers.auth import credentials_auth
+from app.routers import product_mgmt_router
 
 app = FastAPI()
 current_datetime = datetime.now()
