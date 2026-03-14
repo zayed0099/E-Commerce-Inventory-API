@@ -7,5 +7,7 @@ __all__ = [
 	"NewOrder", "NewOrderConfirmation", 
 	"SingleProductData", "MultipleProductData",
 	"TokenResponse", "UserCreate", "UserLogin",
-	"SingleProductDataEntry"
+	"SingleProductDataEntry", "CategoryEntry", 
+	"ProductVariantEntry", "SupplierEntry",
+	"ProductEntryResponse"
 ]

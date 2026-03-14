@@ -9,15 +9,16 @@ from hashids import Hashids
 
 # Local Import
 # from app.database.db import get_db
-from .router import product_mgmt_router
-from app.core.employee_jwt_setup import stock_manager_required
+from .router_settings import product_mgmt_router
+from app.core.jwt_setup.employee_jwt_setup import stock_manager_required
 from app.database.db_for_old_pc import (
 	get_db, PentiumAsyncSession as AsyncSession)
 from app.database import (
-	Products, Category, Inventory, Suppliers, 
+	Products, Category, Inventory, Suppliers, Category,
 	ProductVariant, SupplierDetails, ProductSupplierLink)
 from app.schemas import (
-	SupplierEntry, SingleProductDataEntry, ProductVariantEntry, APIResponse)
+	SupplierEntry, SingleProductDataEntry, ProductVariantEntry, 
+	CategoryEntry, APIResponse, ProductEntryResponse)
 from app.core.logging import admin_logger
 
 root_str_enc = Hashids(
@@ -26,13 +27,13 @@ root_str_enc = Hashids(
 	alphabet="QWERTYUOPADFGHJKLMNBVCXZ246789"
 )
 
-@product_mgmt_router.post("/product/new", response_model=APIResponse)
+@product_mgmt_router.post("/product/new", response_model=ProductEntryResponse)
 async def add_new_product(
 	data: SingleProductDataEntry,
-	current_user: dict = Depends(stock_manager_required), 
+	# current_user: dict = Depends(stock_manager_required), 
 	db: AsyncSession = Depends(get_db)):
 	
-	user_id = current_user["user_id"]
+	# user_id = current_user["user_id"]
 
 	product_name = data.product_name
 	short_desc = data.short_desc
@@ -73,15 +74,16 @@ async def add_new_product(
 				catg_id=catg_id
 			)
 
-		db.add(new_product_entry)
+		await db.add(new_product_entry)
 		await db.commit()
 
 		p_id = new_product_entry.id
 
-		admin_logger.info(
-			f"[PRODUCT_ENTRY]-> product_id: {p_id}, user_id: {user_id}")
+		# admin_logger.info(
+		# 	f"[PRODUCT_ENTRY]-> product_id: {p_id}, user_id: {user_id}")
 
-		return APIResponse(message="Product entry successful.")
+		return ProductEntryResponse(
+			message="Product data entry successful.", product_id=p_id)
 
 	except SQLAlchemyError as er:
 		await db.rollback()
@@ -94,10 +96,10 @@ async def add_new_product(
 @product_mgmt_router.post("/product/add-variant", response_model=APIResponse)
 async def add_product_variant(
 	data: ProductVariantEntry,
-	current_user: dict = Depends(stock_manager_required), 
+	# current_user: dict = Depends(stock_manager_required), 
 	db: AsyncSession = Depends(get_db)):
 	
-	user_id = current_user["user_id"]
+	# user_id = current_user["user_id"]
 
 	# sku will be created in the frontend
 	sku = data.sku
@@ -107,13 +109,13 @@ async def add_product_variant(
 	attributes = data.attributes
 
 	try:
-		new_variant_entry = ProductVariant(
+		new_variant_entry = Inventory(
 				sku=sku,
 				in_stock=in_stock,
 				current_product_stock=current_product_stock,
 				product_id = product_id
 			)
-		db.add(new_variant_entry)
+		await db.add(new_variant_entry)
 		await db.flush()
 
 		sku_id = new_variant_entry.id
@@ -125,12 +127,12 @@ async def add_product_variant(
 					attribute = key,
 					attribute_value = value
 				)
-			db.add(new_attr_entry)
+			await db.add(new_attr_entry)
 
 		await db.commit()
 
-		admin_logger.info(
-			f"[PRODUCT_VARIANT_ENTRY]-> sku_id: {sku_id}, user_id: {user_id}")
+		# admin_logger.info(
+		# 	f"[PRODUCT_VARIANT_ENTRY]-> sku_id: {sku_id}, user_id: {user_id}")
 
 		return APIResponse(message="Product Variant entry successful.")
 
@@ -147,10 +149,10 @@ async def add_product_variant(
 @product_mgmt_router.post("/supplier/new", response_model=APIResponse)
 async def add_new_supplier(
 	data: SupplierEntry,
-	current_user: dict = Depends(stock_manager_required), 
+	# current_user: dict = Depends(stock_manager_required), 
 	db: AsyncSession = Depends(get_db)):
 	
-	user_id = current_user["user_id"]
+	# user_id = current_user["user_id"]
 
 	supp_name = data.name
 	email = data.email
@@ -174,7 +176,7 @@ async def add_new_supplier(
 				is_supplying = is_supplying,
 				supp_type = supp_type
 			)
-		db.add(new_supplier)
+		await db.add(new_supplier)
 		await db.flush()
 
 		supp_id = new_supplier.id
@@ -189,10 +191,11 @@ async def add_new_supplier(
 				supp_id = supp_id
 			)
 
+		await db.add(supplier_details)
 		await db.commit()
 
-		admin_logger.info(
-			f"[SUPPLIER_ENTRY]-> supp_id: {supp_id}, user_id: {user_id}")
+		# admin_logger.info(
+		# 	f"[SUPPLIER_ENTRY]-> supp_id: {supp_id}, user_id: {user_id}")
 
 		return APIResponse(message="Supplier and SupplierDetails entry successful.")
 
@@ -203,3 +206,28 @@ async def add_new_supplier(
 		raise HTTPException(
 			status_code=400, 
 			detail="Product entry failed because of an error.")
+
+@product_mgmt_router.post("/category/new", response_model=APIResponse)
+async def add_new_category(
+	data: CategoryEntry,
+	# current_user: dict = Depends(stock_manager_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	category = data.category
+
+	try:
+		new_catg = Category(
+			category=category, normalized_category= category.strip().lower())
+		
+		await db.add(new_catg)
+		await db.commit()
+		return APIResponse(message="catgeory entry successful.")
+
+	except SQLAlchemyError as e:
+		print(e)
+		await db.rollback()
+
+		raise HTTPException(
+			status_code=400, 
+			detail="Category entry failed because of an error.")
+

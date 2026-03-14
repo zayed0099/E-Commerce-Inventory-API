@@ -8,20 +8,13 @@ from fastapi import HTTPException
 	
 async def check_product_availability( 
 		inventory_db,
+		reservation_db,
 		db: AsyncSession,
 		quantity: int,
 		product_id: int,
-		sku_id: int
+		sku_id: int,
+		tracking_id: int
 	):
-	
-	"""
-	tried to fix race condition problem i created eralier.
-	it used to be
-	select query > check none/in_stock=false > update hold + current stock
-	now, one update query does all the job.
-		it checks if quantity is equal or lower than current stock
-		then updates the data > when another req comes it gets latest stock
-	"""
 
 	try:
 		update_query = (
@@ -40,6 +33,18 @@ async def check_product_availability(
 		)
 
 		result = await db.execute(update_query)
+		
+		ten_min_time = int((datetime.utcnow() + timedelta(minutes=10)).timestamp())
+		reservation_entry = reservation_db(
+				status="pending",
+				quantity=quantity,
+				expires_at=ten_min_time,
+				tracking_id=tracking_id,
+				sku_id=sku_id
+			)
+
+		db.add(reservation_entry)
+
 		await db.commit()
 
 		if result.rowcount == 0:
@@ -84,4 +89,3 @@ async def release_reserved_stocks(
 		await db.rollback()
 		order_logger.info(
 			f"An error occured while releasing stock for failed order[tracking_id: {tracking_id}]")
-				

@@ -1,3 +1,2 @@
-from .router import product_mgmt_router
-
-__all__ = ["product_mgmt_router"]
+from .router_settings import product_mgmt_router
+from . import products

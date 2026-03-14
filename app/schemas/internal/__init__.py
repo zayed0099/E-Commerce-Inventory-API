@@ -1,5 +1,6 @@
 from .product_entry import *
 
 __all__ = [
-	"SingleProductDataEntry", "ProductVariantEntry", "SupplierEntry"
+	"SingleProductDataEntry", "ProductVariantEntry", "SupplierEntry", "CategoryEntry",
+	"ProductEntryResponse"
 ]

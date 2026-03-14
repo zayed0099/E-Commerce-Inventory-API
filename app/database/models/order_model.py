@@ -145,7 +145,7 @@ class ReserveStock(Base):
 	id: Mapped[int] = mapped_column(primary_key=True)
 
 	status: Mapped[str] = mapped_column(
-		String(15), default="processing", nullable=False)
+		String(15), default="pending", nullable=False)
 
 	quantity: Mapped[int] = mapped_column(nullable=False)
 

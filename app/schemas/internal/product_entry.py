@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from datetime import datetime
 from typing import Any, Optional, Union, List, Dict
+from app.schemas.base_schemas import APIResponse
 
 class SingleProductDataEntry(BaseModel):
 	product_name: str
@@ -34,3 +35,9 @@ class SupplierEntry(BaseModel):
 
 	sec_email: str
 	sec_phone: str
+
+class CategoryEntry(BaseModel):
+	category: str
+
+class ProductEntryResponse(APIResponse):
+	product_id: int

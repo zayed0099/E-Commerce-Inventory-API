@@ -5,9 +5,9 @@ from datetime import datetime
 # from app.database.db import init_db
 from app.database.db_for_old_pc import init_db
 from app.core.logging import admin_logger
-from app.routers.order_and_product_management import orders, product_display
+from app.routers.product_display_and_order import orders, product_display
 # from app.routers.auth import credentials_auth
-from app.routers import product_mgmt_router
+from app.routers.internal.product_management import product_mgmt_router
 
 app = FastAPI()
 current_datetime = datetime.now()
@@ -21,6 +21,7 @@ async def on_startup():
 
 # Router Management
 # app.include_router(credentials_auth.auth_router)
+app.include_router(product_mgmt_router)
 app.include_router(product_display.product_display_router)
 app.include_router(orders.order_router)
 
