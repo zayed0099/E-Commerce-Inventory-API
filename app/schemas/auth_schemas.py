@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Any, Optional
 
 class UserLogin(BaseModel):
-	# username : str
 	email : str
 	password : str
 
@@ -13,6 +12,7 @@ class TokenResponse(BaseModel):
 	token_type: str = "Bearer"
 
 class UserCreate(BaseModel):
+	username : str
 	email : str
 	password : str
 

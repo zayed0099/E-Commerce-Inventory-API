@@ -6,11 +6,20 @@ from datetime import datetime
 from app.database.db_for_old_pc import init_db
 from app.core.logging import admin_logger
 from app.routers.product_display_and_order import orders, product_display
-# from app.routers.auth import credentials_auth
+from app.routers.auth import cred_auth
 from app.routers.internal.product_management import product_mgmt_router
 
 app = FastAPI()
 current_datetime = datetime.now()
+
+"""
+!!! WARNING !!!
+I currently added await before all of my db.add operation, but It needs to be
+removed if I shift to real ASYNC SQLALCHEMY. 
+Without the await before db.add operation, my db is not completing add operations
+ex:  await db.add()
+-----------
+"""
 
 # Create tables at startup + APScheduler Startup
 @app.on_event("startup")
@@ -20,7 +29,7 @@ async def on_startup():
 	# start_scheduler(app)
 
 # Router Management
-# app.include_router(credentials_auth.auth_router)
+app.include_router(cred_auth.auth_router)
 app.include_router(product_mgmt_router)
 app.include_router(product_display.product_display_router)
 app.include_router(orders.order_router)

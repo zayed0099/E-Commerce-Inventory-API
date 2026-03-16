@@ -33,12 +33,12 @@ def create_product_data():
 	image_link = base_url + prod_name.replace(" ", "-")
 	short_desc = generate_short_desc(product_name)
 	current_price = random.choice([30000, 35000, 40000, 45000, 50000])
-	in_stock = random.choice([True, False])
+	in_stock = random.choice([True, True, False])
 	catg_id = 1 # for now electronics id = 1
-	supplier_id = random.randint(1, 20)
+	supplier_id = random.randint(1, 10)
 	
 	sku = f"{brand.upper()}-{product.upper()}-{rndm_str.upper()}"
-	current_product_stock = random.randint(1, 50)
+	current_product_stock = random.randint(1, 50) if in_stock else 0
 
 
 	if product in ["Laptop", "Tablet", "Smartphone"]:

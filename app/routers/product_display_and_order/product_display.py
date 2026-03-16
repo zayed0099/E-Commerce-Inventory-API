@@ -9,8 +9,9 @@ from hashids import Hashids
 
 # Local Import
 from app.utils import paginated_data_count
-from app.database.db import get_db
-from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
+# from app.database.db import get_db
+from app.database.db_for_old_pc import (
+	PentiumAsyncSession as AsyncSession, get_db)
 from app.database import (
 	Products, Category, Inventory, ProductVariant)
 from app.core.config import API_VERSION

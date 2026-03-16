@@ -3,8 +3,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from sqlalchemy import select, exists, and_
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.database.db import SessionLocal
+# from sqlalchemy.ext.asyncio import AsyncSession
+# from app.database.db import SessionLocal
+
+from app.database.db_for_old_pc import (
+	PentiumAsyncSession as AsyncSession,
+	SessionLocalSync as SessionLocal, get_db
+)
 from app.database import EmployeeDB
 from .jwt_config import security, decode_jwt
 from app.core.logging import admin_logger

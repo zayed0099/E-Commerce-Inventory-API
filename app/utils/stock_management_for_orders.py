@@ -1,6 +1,6 @@
 # from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
-
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, exists, func, update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
@@ -34,6 +34,15 @@ async def check_product_availability(
 
 		result = await db.execute(update_query)
 		
+		if result.rowcount == 0:
+			raise HTTPException(
+				status_code=400,
+				detail="An error occured with product stock")
+		
+		# elif result.rowcount == 1:
+		# 	return True
+
+
 		ten_min_time = int((datetime.utcnow() + timedelta(minutes=10)).timestamp())
 		reservation_entry = reservation_db(
 				status="pending",
@@ -43,17 +52,9 @@ async def check_product_availability(
 				sku_id=sku_id
 			)
 
-		db.add(reservation_entry)
+		await db.add(reservation_entry)
 
 		await db.commit()
-
-		if result.rowcount == 0:
-			raise HTTPException(
-				status_code=400,
-				detail="An error occured with product stock")
-		
-		elif result.rowcount == 1:
-			return True
 
 	except SQLAlchemyError as e:
 		await db.rollback()

@@ -145,6 +145,25 @@ async def add_product_variant(
 			status_code=400, 
 			detail="Product variant entry failed because of an error.")
 
+@product_mgmt_router.post("/product/supplier/new-record", response_model=APIResponse)
+async def add_supplier_for_product(
+	data: SupplierEntry,
+	# current_user: dict = Depends(stock_manager_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	# user_id = current_user["user_id"]
+	rate = data.rate
+	unit_supplied = data.unit_supplied
+	delivery_method = data.delivery_method
+	status = data.status
+
+	supp_id = data.supp_id
+	product_id = data.product_id
+
+	order_placed_at = data.order_placed_at
+	delivered_at = data.delivered_at
+
+	
 
 @product_mgmt_router.post("/supplier/new", response_model=APIResponse)
 async def add_new_supplier(

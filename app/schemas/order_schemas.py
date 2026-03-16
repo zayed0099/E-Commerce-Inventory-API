@@ -12,18 +12,18 @@ class OrderProduct(BaseModel):
 	unit_price_at_order: float
 
 	@model_validator(mode="after")
-	def no_null_value(cls, v):
-		product_id = v.get("product_id")
-		catg_id = v.get("catg_id")
-		quantity = v.get("quantity")
-		unit_price_at_order = v.get("unit_price_at_order")	
+	def no_null_value(self):
+		variables = [
+			self.product_id,
+			self.catg_id,
+			self.quantity,
+			self.unit_price_at_order
+		]
 
-		variables = [product_id, catg_id, quantity, unit_price_at_order]
-		
 		if any(vr <= 0 for vr in variables):
 			raise ValueError("0/Negative Values can't be accepted.")
 		
-		return v
+		return self
 		
 class NewOrder(BaseModel):
 	"""
@@ -43,10 +43,10 @@ class NewOrder(BaseModel):
 	items: List[OrderProduct]
 
 	@model_validator(mode="after")
-	def order_validator(cls, v):
-		pay_method = v.get("pay_method")
-		payment_status = v.get("payment_status")
-		items = v.get("items")
+	def order_validator(self):
+		pay_method = self.pay_method
+		payment_status = self.payment_status
+		items = self.items
 
 		if not items or len(items) == 0:
 			raise ValueError("Items can't be empty.")
@@ -57,7 +57,7 @@ class NewOrder(BaseModel):
 		if pay_method in ["bkash", "gateway"] and payment_status != "paid":
 			raise ValueError("Incorrect payment_status.")
 		
-		return v
+		return self
 
 class NewOrderConfirmation(APIResponse):
 	tracking_id: str

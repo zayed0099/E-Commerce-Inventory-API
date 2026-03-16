@@ -1,5 +1,5 @@
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
@@ -22,6 +22,11 @@ def decode_jwt(token: str) -> Optional[dict]:
 		return decoded_token
 		
 	except jwt.ExpiredSignatureError:
+		# # only for debugging
+		# unv_payload = jwt.decode(token, options={"verify_signature": False})
+		# exp = unv_payload.get("exp")
+		# print("exp : ", exp)
+
 		raise HTTPException(
 			status_code=status.HTTP_401_UNAUTHORIZED,
 			detail="Token has expired",
@@ -35,13 +40,15 @@ def decode_jwt(token: str) -> Optional[dict]:
 		)
 
 async def create_jwt(user_id, role):
+	now = datetime.now(timezone.utc)
+
 	access_token = jwt.encode(
 		payload={
 			"role": role, 
 			"user_id" : user_id,
 			"type" : "access",
-			"iat": int(datetime.utcnow().timestamp()),
-			"exp": int((datetime.utcnow() + timedelta(minutes=30)).timestamp())
+			"iat": int(now.timestamp()),
+			"exp": int((now + timedelta(minutes=30)).timestamp())
 		}, 
 		key=JWT_SECRET, 
 		algorithm=JWT_ALGORITHM
@@ -52,11 +59,14 @@ async def create_jwt(user_id, role):
 			"role": role, 
 			"user_id" : user_id,
 			"type" : "refresh",
-			"iat": int(datetime.utcnow().timestamp()),
-			"exp": int((datetime.utcnow() + timedelta(minutes=120)).timestamp())
+			"iat": int(now.timestamp()),
+			"exp": int((now + timedelta(minutes=60)).timestamp())
 		}, 
 		key=JWT_SECRET, 
 		algorithm=JWT_ALGORITHM
 	)
+
+	# jwt_creation_time = int(datetime.utcnow().timestamp())
+	# print("creation time: ", jwt_creation_time)
 
 	return access_token, refresh_token

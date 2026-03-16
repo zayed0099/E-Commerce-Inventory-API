@@ -9,7 +9,7 @@
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends
-from sqlalchemy import select, exists
+from sqlalchemy import select, exists, update
 # from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import and_
@@ -17,17 +17,17 @@ from typing import List
 from datetime import datetime, timedelta
 from hashids import Hashids
 # Local Import
-from app.database.db import get_db
+# from app.database.db import get_db
 from app.database.db_for_old_pc import (
 	PentiumAsyncSession as AsyncSession,
-	SessionLocalSync as SessionLocal
+	SessionLocalSync as SessionLocal, get_db
 )
 from app.database import (
-	Inventory, OrderTracking, OrderItem, OrderSummary, DeliveryDetails)
+	Inventory, OrderTracking, OrderItem, OrderSummary, DeliveryDetails, ReserveStock)
 from app.core.logging import admin_logger, order_logger
 from app.core.jwt_setup import get_current_user
 from app.core.config import API_VERSION, TRACKING_ENC_KEY, ALPHABET_ENC
-from app.schemas import NewOrder, NewOrderConfirmation
+from app.schemas import NewOrder, NewOrderConfirmation, APIResponse
 from app.utils.stock_management_for_orders import (
 	check_product_availability, release_reserved_stocks)
 
@@ -64,7 +64,7 @@ async def add_new_order(
 				user_id=user_id,
 				order_status='creating')
 
-		db.add(order_tracking_entry)
+		await db.add(order_tracking_entry)
 		await db.flush()
 
 		tracking_id = order_tracking_entry.id
@@ -83,10 +83,12 @@ async def add_new_order(
 
 			is_product_available = await check_product_availability( 
 				inventory_db=Inventory,
+				reservation_db=ReserveStock,
 				db=db,
 				quantity=quantity,
 				product_id=product_id,
-				sku_id=sku_id
+				sku_id=sku_id,
+				tracking_id=tracking_id
 			)
 
 			if not is_product_available:
@@ -102,13 +104,13 @@ async def add_new_order(
 				quantity=quantity,
 				unit_price_at_order=product.unit_price_at_order)
 		
-			db.add(order_item_entry)
+			await db.add(order_item_entry)
 
 		order_summary_entry = OrderSummary(
 				user_id=user_id,
 				tracking_id=tracking_id,
 				hashed_tracking_id=hashed_order_tracking_id)
-		db.add(order_summary_entry)
+		await db.add(order_summary_entry)
 
 		delivery_address_entry = DeliveryDetails(
 				address_line=data.address_line,
@@ -119,9 +121,7 @@ async def add_new_order(
 				sec_phone=data.sec_phone,
 				tracking_id=tracking_id
 			)
-		db.add(delivery_address_entry)
-
-		await db.commit()
+		await db.add(delivery_address_entry)
 
 		if tracking_id is not None:
 			try:
@@ -131,11 +131,13 @@ async def add_new_order(
 					.values(
 						status = 'placed'
 					))
-				tracking_update = await new_session.execute(tracking_query)
+				tracking_update = await db.execute(tracking_query)
 
 			except SQLAlchemyError:
 				order_logger.info(f"Tracking_id: {tracking_id}, status update to 'placed' failed.")
 
+		await db.commit()
+		
 		return NewOrderConfirmation(tracking_id=hashed_order_tracking_id)
 
 	except (SQLAlchemyError, HTTPException) as er:
@@ -150,16 +152,15 @@ async def add_new_order(
 						tracking_query = (
 							update(OrderTracking)
 							.where(OrderTracking.id == tracking_id)
-							.values(
-								status = 'cancelled'
-						))
+							.values(status = 'cancelled')
+						)
 						tracking_update = await new_session.execute(tracking_query) 
 							 
-					release_stocks = await release_reserved_stocks(
-						reservation_db=ReserveStock,
-						db=new_session,
-						tracking_id=tracking_id
-					)
+						release_stocks = await release_reserved_stocks(
+							reservation_db=ReserveStock,
+							db=new_session,
+							tracking_id=tracking_id
+						)
 
 			except Exception as e:
 				order_logger.info(
@@ -171,3 +172,12 @@ async def add_new_order(
 			status_code=400, 
 			detail="Order Cancelled because of an error.")
 
+@order_router.get("/authenticate")
+async def auth_check(
+	current_user: dict = Depends(get_current_user), 
+	db: AsyncSession = Depends(get_db)):
+	
+	user_id = current_user["user_id"]
+
+	res = {"user_id" : user_id}
+	return APIResponse(message="Authentication successful!", data=res)

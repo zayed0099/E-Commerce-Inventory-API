@@ -41,3 +41,15 @@ class CategoryEntry(BaseModel):
 
 class ProductEntryResponse(APIResponse):
 	product_id: int
+
+class ProductSupplierLinkEntry(BaseModel):
+	rate : float
+	unit_supplied: int
+	delivery_method : str
+	status : str
+	
+	supp_id: int
+	product_id: int
+
+	order_placed_at: datetime
+	delivered_at : datetime = None 

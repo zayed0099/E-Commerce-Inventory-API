@@ -8,7 +8,7 @@ from .jwt_config import security, decode_jwt
 async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
 	token = cred.credentials
 	payload = decode_jwt(token)
-
+	
 	if not payload:
 		raise HTTPException(
 			status_code=status.HTTP_401_UNAUTHORIZED,
