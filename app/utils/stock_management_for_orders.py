@@ -5,7 +5,8 @@ from sqlalchemy import select, exists, func, update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
-	
+from app.core.logging import order_logger
+
 async def check_product_availability( 
 		inventory_db,
 		reservation_db,
@@ -34,7 +35,7 @@ async def check_product_availability(
 
 		result = await db.execute(update_query)
 		
-		if result.rowcount == 0:
+		if not result.rowcount or result.rowcount < 1:
 			raise HTTPException(
 				status_code=400,
 				detail="An error occured with product stock")
@@ -55,8 +56,9 @@ async def check_product_availability(
 		await db.add(reservation_entry)
 
 		await db.commit()
+		return True
 
-	except SQLAlchemyError as e:
+	except (SQLAlchemyError, HTTPException) as e:
 		await db.rollback()
 		raise HTTPException(
 			status_code=500, 
@@ -74,7 +76,8 @@ async def release_reserved_stocks(
 			.where(reservation_db.tracking_id == tracking_id)
 			.options(joinedload(reservation_db.inventory_item)) 
 		)
-		reserved_stocks = await (db.execute(stmt)).scalars().all()
+		result = await db.execute(stmt)
+		reserved_stocks = result.scalars().all()
 
 		for data in reserved_stocks:
 			data.inventory_item.current_product_stock += data.quantity
@@ -82,7 +85,7 @@ async def release_reserved_stocks(
 			data.status = "cancelled"
 			
 			order_logger.info(
-				f"{data.quantity} products[order tracking id : {tracking_id}] have been released from hold.")
+				f"STOCK_RELEASE - {data.quantity} products[order tracking id : {tracking_id}] released from hold.")
 
 		return True
 

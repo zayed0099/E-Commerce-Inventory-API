@@ -53,7 +53,6 @@ async def add_new_order(
 		OrderSummary > sends user hashed order tracking key(user_id, OrderTracking.id)
 		if user confirms the order,then he can pay in advance or select COD
 	"""
-
 	try:
 		user_id = current_user["user_id"]
 		tracking_id = None
@@ -91,10 +90,11 @@ async def add_new_order(
 				tracking_id=tracking_id
 			)
 
-			if not is_product_available:
-				raise HTTPException(
-					status_code=500, 
-					detail="Product Out of Stock.")
+			# if not is_product_available:
+			# 	raise HTTPException(
+			# 		status_code=500, 
+			# 		detail="Product Out of Stock.")
+
 
 			order_item_entry = OrderItem(
 				tracking_id=tracking_id,
@@ -129,45 +129,50 @@ async def add_new_order(
 					update(OrderTracking)
 					.where(OrderTracking.id == tracking_id)
 					.values(
-						status = 'placed'
+						order_status = 'placed'
 					))
 				tracking_update = await db.execute(tracking_query)
 
-			except SQLAlchemyError:
-				order_logger.info(f"Tracking_id: {tracking_id}, status update to 'placed' failed.")
-
+			except SQLAlchemyError as ee:
+				order_logger.exception(f"Tracking_id: {tracking_id}, status update to 'placed' failed.")
+				raise ee
 		await db.commit()
 		
 		return NewOrderConfirmation(tracking_id=hashed_order_tracking_id)
 
 	except (SQLAlchemyError, HTTPException) as er:
 		await db.rollback()
-		print(er)
 
 		# updating the tracking status
 		if tracking_id is not None:
 			try:
-				async with SessionLocal() as new_session:
-					async with new_session.begin():
-						tracking_query = (
-							update(OrderTracking)
-							.where(OrderTracking.id == tracking_id)
-							.values(status = 'cancelled')
-						)
-						tracking_update = await new_session.execute(tracking_query) 
-							 
-						release_stocks = await release_reserved_stocks(
-							reservation_db=ReserveStock,
-							db=new_session,
-							tracking_id=tracking_id
-						)
+				sync_session = SessionLocal()
+				async with AsyncSession(sync_session) as new_session:
+					# async with new_session.begin():
+					"""
+					[If the code uses Real AsyncSession then un-comment the above part and 
+					indent the below code inside it]
+					"""
+					tracking_query = (
+						update(OrderTracking)
+						.where(OrderTracking.id == tracking_id)
+						.values(order_status = 'cancelled')
+					)
+					tracking_update = await new_session.execute(tracking_query) 
+						 
+					release_stocks = await release_reserved_stocks(
+						reservation_db=ReserveStock,
+						db=new_session,
+						tracking_id=tracking_id
+					)
+					# no commit here.
 
-			except Exception as e:
-				order_logger.info(
+			except Exception:
+				order_logger.exception(
 					f"Order Tracking(id:{tracking_id}) status update to 'cancelled' and stock release failed."
 				)
-				print(e)
-				 
+		
+		order_logger.exception(f"Order failed: {er}")
 		raise HTTPException(
 			status_code=400, 
 			detail="Order Cancelled because of an error.")

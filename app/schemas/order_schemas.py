@@ -62,4 +62,3 @@ class NewOrder(BaseModel):
 class NewOrderConfirmation(APIResponse):
 	tracking_id: str
 	message: str = "Thanks for ordering. Your order will be delivered to you soon."
-

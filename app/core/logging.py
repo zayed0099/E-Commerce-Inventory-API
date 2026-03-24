@@ -33,7 +33,7 @@ sqlalchemy_formatter = logging.Formatter(
 								
 sqlalchemy_handler.setFormatter(sqlalchemy_formatter)
 sqlalchemy_logger.addHandler(sqlalchemy_handler)
-sqlalchemy_logger.setLevel(logging.INFO)
+sqlalchemy_logger.setLevel(logging.DEBUG)
 sqlalchemy_logger.propagate = False
 
 # --- fastapi uvicorn access logger
