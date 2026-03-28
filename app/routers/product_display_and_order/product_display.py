@@ -133,7 +133,7 @@ async def multiple_product_display(
 	products = (await db.execute(q)).all()
 
 	if not products:
-		raise HTTPException(status_code=404, detail="Item not found")
+		raise HTTPException(status_code=404, detail="No product found.")
 
 	data_to_send = {
 		"page" : page,

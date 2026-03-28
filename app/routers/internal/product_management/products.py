@@ -18,7 +18,7 @@ from app.database import (
 	ProductVariant, SupplierDetails, ProductSupplierLink)
 from app.schemas import (
 	SupplierEntry, SingleProductDataEntry, ProductVariantEntry, 
-	CategoryEntry, APIResponse, ProductEntryResponse)
+	CategoryEntry, APIResponse, ProductEntryResponse, ProductSupplierLinkEntry)
 from app.core.logging import admin_logger
 
 root_str_enc = Hashids(
@@ -147,7 +147,7 @@ async def add_product_variant(
 
 @product_mgmt_router.post("/product/supplier/new-record", response_model=APIResponse)
 async def add_supplier_for_product(
-	data: SupplierEntry,
+	data: ProductSupplierLinkEntry,
 	# current_user: dict = Depends(stock_manager_required), 
 	db: AsyncSession = Depends(get_db)):
 	
@@ -163,7 +163,26 @@ async def add_supplier_for_product(
 	order_placed_at = data.order_placed_at
 	delivered_at = data.delivered_at
 
-	
+	new_entry = ProductSupplierLink(
+			rate=rate,
+			unit_supplied=unit_supplied,
+			delivery_method=delivery_method,
+			status=status,
+			supp_id=supp_id, product_id=product_id,
+			order_placed_at=order_placed_at,
+			delivered_at=delivered_at
+		)
+
+	try:
+		await db.add(new_entry)
+		await db.commit()
+
+		return APIResponse(message="Supplier and Product Link entry successful.")
+
+	except SQLAlchemyError as e:
+		print(e)
+		await db.rollback()
+		return APIResponse(message="An database error occured.")
 
 @product_mgmt_router.post("/supplier/new", response_model=APIResponse)
 async def add_new_supplier(
@@ -240,7 +259,7 @@ async def add_new_category(
 		
 		await db.add(new_catg)
 		await db.commit()
-		return APIResponse(message="catgeory entry successful.")
+		return APIResponse(message="Catgeory entry successful.")
 
 	except SQLAlchemyError as e:
 		print(e)

@@ -31,6 +31,8 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 		token = cred.credentials
 		payload = decode_jwt(token)
 		
+		user_id = payload["user_id"]
+
 		if not payload:
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
@@ -38,12 +40,18 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 				headers={"WWW-Authenticate": "Bearer"},
 			)
 
-		user_id = payload["user_id"]
+		if not user_id:
+			raise HTTPException(
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Invalid JWT payload",
+				headers={"WWW-Authenticate": "Bearer"},
+			)
+
 		query = await db.execute(
 			select(exists().where(
 				and_(
 					EmployeeDB.id == user_id,
-					EmployeeDB.role.in_("admin", role)
+					EmployeeDB.role.in_(["admin", role])
 				)
 			))
 		)
@@ -51,7 +59,7 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 
 		if record_exists:
 			admin_logger.info(
-				f"User[id : {user_id}, role : {role}] logged in.")
+				f"Userid : {user_id}, role : {role}] logged in.")
 			return payload
 		else:
 			admin_logger.info(

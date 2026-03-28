@@ -83,6 +83,7 @@ class Category(Base):
 class Inventory(Base):
 	__tablename__ = "inventory"
 	
+	# We use "Inventory.id" as "sku_id" almost everywhere
 	id: Mapped[int] = mapped_column(primary_key=True)
 	is_archived: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
 	

@@ -10,5 +10,6 @@ __all__ = [
 	"TokenResponse", "UserCreate", "UserLogin",
 	"SingleProductDataEntry", "CategoryEntry", 
 	"ProductVariantEntry", "SupplierEntry",
-	"ProductEntryResponse", "APIResponse"
+	"ProductEntryResponse", "APIResponse",
+	"MultipleOrderedProductSummary"
 ]

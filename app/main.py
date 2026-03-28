@@ -8,6 +8,7 @@ from app.core.logging import admin_logger
 from app.routers.product_display_and_order import orders, product_display
 from app.routers.auth import cred_auth
 from app.routers.internal.product_management import product_mgmt_router
+from app.routers.internal import order_packaging
 
 app = FastAPI()
 current_datetime = datetime.now()
@@ -28,11 +29,12 @@ async def on_startup():
 	admin_logger.info(f"Server started at {current_datetime}")
 	# start_scheduler(app)
 
-# Router Management
+# Router Management 
 app.include_router(cred_auth.auth_router)
 app.include_router(product_mgmt_router)
 app.include_router(product_display.product_display_router)
 app.include_router(orders.order_router)
+app.include_router(order_packaging.packg_router)
 
 # App Shutdown settings
 @app.on_event("shutdown")
