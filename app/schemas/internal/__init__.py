@@ -3,5 +3,6 @@ from .packaging import *
 
 __all__ = [
 	"SingleProductDataEntry", "ProductVariantEntry", "SupplierEntry", "CategoryEntry",
-	"ProductEntryResponse", "ProductSupplierLinkEntry", "MultipleOrderedProductSummary"
+	"ProductEntryResponse", "ProductSupplierLinkEntry", "MultipleOrderedProductSummary",
+	"DetailedSingleOrderItemData"
 ]

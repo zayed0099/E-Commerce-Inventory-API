@@ -11,5 +11,5 @@ __all__ = [
 	"SingleProductDataEntry", "CategoryEntry", 
 	"ProductVariantEntry", "SupplierEntry",
 	"ProductEntryResponse", "APIResponse",
-	"MultipleOrderedProductSummary"
+	"MultipleOrderedProductSummary", "DetailedSingleOrderItemData"
 ]

@@ -14,7 +14,8 @@ from app.database import (
 	Products, Category, Inventory, ProductVariant)
 from app.core.jwt_setup import packaging_role_required
 from app.core.config import API_VERSION
-from app.schemas import MultipleOrderedProductSummary
+from app.schemas import (
+	MultipleOrderedProductSummary, DetailedSingleOrderItemData)
 from app.utils import paginated_data_count
 
 packg_router = APIRouter(
@@ -88,9 +89,11 @@ async def manage_all_products(
 	response = MultipleOrderedProductSummary(**data_to_send)
 	return response
 
-@packg_router.get("/item/")
+@packg_router.get("/item/", response_model=DetailedSingleOrderItemData)
 async def single_product_status(
-	tracking_id: int, verbose: bool = False,
+	tracking_id: int, 
+	orderitem_id: int,
+	verbose: bool = False,
 	# current_user: dict = Depends(packaging_role_required), 
 	db: AsyncSession = Depends(get_db)):
 	
@@ -153,7 +156,37 @@ async def single_product_status(
 	single_order_item = (await db.execute(q)).all()
 	# print(single_order_item)
 	
-	data_to_send = []
+	if not single_order_item:
+		raise HTTPException(status_code=404, detail="Item not found")
 
-	if verbose:
-		
+	orderitem = None
+
+	for data in single_order_item:
+		if orderitem is None:
+			orderitem = {
+				"orderitem_id" : data.orderitem_id,
+				"order_quantity" : data.order_quantity,
+				"is_processed" : data.is_processed,
+				"is_confirmed" : data.is_confirmed,
+				"tracking_id" : data.tracking_id,
+				"attributes" : {}
+			}
+
+		if verbose:
+			orderitem.update({
+				"product_name" : data.product_name, 
+				"image_link" : data.image_link, 
+				"current_price" : data.current_price, 
+				"in_stock" : data.in_stock,
+				"category" : data.category, 
+				"sku" : data.sku,
+				"variant_in_stock" : data.variant_in_stock,
+				"confirmed_product_stock" : data.confirmed_product_stock,
+			})
+
+			orderitem["attributes"][data.attribute] = data.attribute_value
+
+	response = DetailedSingleOrderItemData(**orderitem)
+	return response
+
+

@@ -18,7 +18,7 @@ class MultipleOrderedProductSummary(BaseModel):
 
 	ordered_products: List[SummariazedOrderItemData]
 
-class DetailedSingleOrderItemdata(BaseModel):
+class DetailedSingleOrderItemData(BaseModel):
 	orderitem_id : int
 	order_quantity: int
 	is_processed: int
@@ -34,3 +34,5 @@ class DetailedSingleOrderItemdata(BaseModel):
 	variant_in_stock: bool | None = None
 	confirmed_product_stock: int | None = None
 	attributes: dict[str, str | int | float] | None
+
+	model_config = ConfigDict(from_attributes=True)
