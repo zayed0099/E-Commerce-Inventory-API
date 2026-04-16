@@ -77,7 +77,7 @@ async def add_new_order(
 		
 		for product in data.items:
 			quantity = product.quantity
-			product_id = product.product_id
+			product_id = product.product_id	
 			sku_id = product.sku_id
 
 			is_product_available = await check_product_availability( 
@@ -130,12 +130,13 @@ async def add_new_order(
 					.where(OrderTracking.id == tracking_id)
 					.values(
 						order_status = 'placed'
-					))
+				))
 				tracking_update = await db.execute(tracking_query)
 
-			except SQLAlchemyError as ee:
+			except SQLAlchemyError:
 				order_logger.exception(f"Tracking_id: {tracking_id}, status update to 'placed' failed.")
-				raise ee
+				raise
+
 		await db.commit()
 		
 		return NewOrderConfirmation(tracking_id=hashed_order_tracking_id)
@@ -173,9 +174,7 @@ async def add_new_order(
 				)
 		
 		order_logger.exception(f"Order failed: {er}")
-		raise HTTPException(
-			status_code=400, 
-			detail="Order Cancelled because of an error.")
+		raise
 
 @order_router.get("/authenticate")
 async def auth_check(
@@ -185,4 +184,6 @@ async def auth_check(
 	user_id = current_user["user_id"]
 
 	res = {"user_id" : user_id}
+	raise Exception("test")
+	
 	return APIResponse(message="Authentication successful!", data=res)

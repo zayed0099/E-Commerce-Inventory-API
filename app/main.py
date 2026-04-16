@@ -9,6 +9,7 @@ from app.routers.product_display_and_order import orders, product_display
 from app.routers.auth import cred_auth
 from app.routers.internal.product_management import product_mgmt_router
 from app.routers.internal import order_packaging
+from app.core.logging import register_exception_handlers
 
 app = FastAPI()
 current_datetime = datetime.now()
@@ -28,6 +29,9 @@ async def on_startup():
 	await init_db()
 	admin_logger.info(f"Server started at {current_datetime}")
 	# start_scheduler(app)
+
+# Global Exception Handler
+register_exception_handlers(app)
 
 # Router Management 
 app.include_router(cred_auth.auth_router)

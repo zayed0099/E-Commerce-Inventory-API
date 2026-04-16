@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from sqlalchemy import select, exists
+from sqlalchemy import select, exists, update
 # from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import and_
@@ -14,7 +14,7 @@ from app.database import (
 	Products, Category, Inventory, ProductVariant)
 from app.core.jwt_setup import packaging_role_required
 from app.core.config import API_VERSION
-from app.schemas import (
+from app.schemas import (APIResponse,
 	MultipleOrderedProductSummary, DetailedSingleOrderItemData)
 from app.utils import paginated_data_count
 
@@ -24,7 +24,7 @@ packg_router = APIRouter(
 	tags=["packaging(internal)"])
 
 @packg_router.get("/items", response_model=MultipleOrderedProductSummary)
-async def manage_all_products(
+async def manage_all_orderitem(
 	page: int = 1, per_page: int = 10,
 	# current_user: dict = Depends(packaging_role_required), 
 	db: AsyncSession = Depends(get_db)):
@@ -43,8 +43,7 @@ async def manage_all_products(
 	Example Output: 
 	[
 		(1, 3, 35000, False, False, 2), 
-		(2, 1, 25000, False, False, 4), 
-		(3, 4, 45000, False, False, 4)
+		(2, 1, 25000, False, False, 4)
 	]
 	"""
 	q = (
@@ -90,8 +89,7 @@ async def manage_all_products(
 	return response
 
 @packg_router.get("/item/", response_model=DetailedSingleOrderItemData)
-async def single_product_status(
-	tracking_id: int, 
+async def single_orderitem_data( 
 	orderitem_id: int,
 	verbose: bool = False,
 	# current_user: dict = Depends(packaging_role_required), 
@@ -142,7 +140,7 @@ async def single_product_status(
 				ProductVariant.sku_id == OrderItem.sku_id,
 				isouter=True
 			)
-			.where(OrderItem.tracking_id == tracking_id)
+			.where(OrderItem.id == orderitem_id)
 		)
 
 		product_info = None
@@ -150,7 +148,7 @@ async def single_product_status(
 	else:
 		q = (
 			select(*base_columns)
-			.where(OrderItem.tracking_id == tracking_id)
+			.where(OrderItem.id == orderitem_id)
 		)
 
 	single_order_item = (await db.execute(q)).all()
@@ -189,4 +187,37 @@ async def single_product_status(
 	response = DetailedSingleOrderItemData(**orderitem)
 	return response
 
+@packg_router.patch("/item/update/")
+async def update_processing_status( 
+	orderitem_id: int, value: bool = True,
+	# current_user: dict = Depends(packaging_role_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	try:
+		q = (
+			update(OrderItem)
+			.where(
+				OrderItem.id == orderitem_id
+			)
+			.values(is_processed = value)
+			.returning(OrderItem)
+		)
+		result = await db.execute(q)
 
+		updated = result.scalar_one_or_none()
+
+		if not updated:
+			raise HTTPException(
+				status_code=404,
+				detail="Orderitem not found.")
+
+		if value:
+			msg_str = "processed"
+		else:
+			msg_str = "not processed"	
+		
+		return APIResponse(
+			message=f"Orderitem_id: {updated.id}, has been marked {msg_str}.")
+
+	except SQLAlchemyError as e:
+		raise

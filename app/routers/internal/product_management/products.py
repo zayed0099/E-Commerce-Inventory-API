@@ -87,11 +87,7 @@ async def add_new_product(
 
 	except SQLAlchemyError as er:
 		await db.rollback()
-		print(er)
-				 
-		raise HTTPException(
-			status_code=400, 
-			detail="Product entry failed because of an error.")
+		raise
 
 @product_mgmt_router.post("/product/add-variant", response_model=APIResponse)
 async def add_product_variant(
@@ -139,11 +135,7 @@ async def add_product_variant(
 
 	except SQLAlchemyError as er:
 		await db.rollback()
-		print(er)
-				 
-		raise HTTPException(
-			status_code=400, 
-			detail="Product variant entry failed because of an error.")
+		raise
 
 @product_mgmt_router.post("/product/supplier/new-record", response_model=APIResponse)
 async def add_supplier_for_product(
@@ -179,10 +171,9 @@ async def add_supplier_for_product(
 
 		return APIResponse(message="Supplier and Product Link entry successful.")
 
-	except SQLAlchemyError as e:
-		print(e)
+	except SQLAlchemyError:
 		await db.rollback()
-		return APIResponse(message="An database error occured.")
+		raise
 
 @product_mgmt_router.post("/supplier/new", response_model=APIResponse)
 async def add_new_supplier(
@@ -237,13 +228,9 @@ async def add_new_supplier(
 
 		return APIResponse(message="Supplier and SupplierDetails entry successful.")
 
-	except SQLAlchemyError as er:
+	except SQLAlchemyError:
 		await db.rollback()
-		print(er)
-				 
-		raise HTTPException(
-			status_code=400, 
-			detail="Product entry failed because of an error.")
+		raise
 
 @product_mgmt_router.post("/category/new", response_model=APIResponse)
 async def add_new_category(
@@ -261,11 +248,7 @@ async def add_new_category(
 		await db.commit()
 		return APIResponse(message="Catgeory entry successful.")
 
-	except SQLAlchemyError as e:
-		print(e)
+	except SQLAlchemyError:
 		await db.rollback()
-
-		raise HTTPException(
-			status_code=400, 
-			detail="Category entry failed because of an error.")
+		raise 
 

@@ -46,8 +46,20 @@ uvicorn_logger.propagate = False
 
 # --- fastapi uvicorn error logger
 uvicorn_error_logger = logging.getLogger("uvicorn.error")
-uvicorn_error_handler = logging.FileHandler("logs/error.log")
+uvicorn_error_handler = logging.FileHandler("logs/uvicorn.log")
 uvicorn_error_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 uvicorn_error_logger.addHandler(uvicorn_error_handler)
 uvicorn_error_logger.setLevel(logging.DEBUG)
 uvicorn_error_logger.propagate = False
+
+# Central error handler
+error_logger = logging.getLogger("app_logger")
+error_handler = logging.FileHandler("logs/error.log")
+formatter = logging.Formatter(
+    "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+)
+error_logger.setLevel(logging.ERROR)
+error_handler.setFormatter(formatter)
+error_logger.addHandler(error_handler)
+error_logger.propagate = False
+

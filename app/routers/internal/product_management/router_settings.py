@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 # Local Import
-from app.core.jwt_setup import stock_manager_required
+# from app.core.jwt_setup import stock_manager_required
 from app.core.config import API_VERSION
 
 product_mgmt_router = APIRouter(

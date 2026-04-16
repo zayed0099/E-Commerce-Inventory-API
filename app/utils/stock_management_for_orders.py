@@ -58,11 +58,9 @@ async def check_product_availability(
 		await db.commit()
 		return True
 
-	except (SQLAlchemyError, HTTPException) as e:
+	except (SQLAlchemyError, HTTPException):
 		await db.rollback()
-		raise HTTPException(
-			status_code=500, 
-			detail="An Database error occured.")
+		raise
 
 async def release_reserved_stocks(
 		reservation_db,
@@ -89,7 +87,9 @@ async def release_reserved_stocks(
 
 		return True
 
-	except SQLAlchemyError as e:
+	except SQLAlchemyError:
 		await db.rollback()
 		order_logger.info(
 			f"An error occured while releasing stock for failed order[tracking_id: {tracking_id}]")
+
+		raise
