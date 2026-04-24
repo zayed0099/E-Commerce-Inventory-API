@@ -10,12 +10,12 @@ class UserDB(Base):
 	
 	id: Mapped[int] = mapped_column(primary_key=True)
 
-	username: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)
-	email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-	password: Mapped[Union[str, None]] = mapped_column(String(150))
-
-	is_oauth_login: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-	is_banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+	is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+	
+	first_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	last_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
+	country: Mapped[str] = mapped_column(String(20), default="Bangladesh", nullable=False)
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
@@ -24,7 +24,17 @@ class UserDB(Base):
 	# relationships
 	orders_summary: Mapped[List["OrderSummary"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")
-
+	
 	track_orders: Mapped[List["OrderTracking"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")
 
+	auth_details: Mapped["AuthDataDB"] = relationship(back_populates="user_account")
+
+	auth_id: Mapped[int] = mapped_column(ForeignKey(
+		"user_auth.id", ondelete="CASCADE"), index=True, unique=True, nullable=False)
+
+	__table_args__ = (
+		CheckConstraint(
+			"country IN ('Bangladesh')", 
+			name='ck_user_country'),
+		)

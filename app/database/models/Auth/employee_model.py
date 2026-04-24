@@ -10,12 +10,18 @@ class EmployeeDB(Base):
 	
 	id: Mapped[int] = mapped_column(primary_key=True)
 
-	username: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)
-	email: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-	password: Mapped[Union[str, None]] = mapped_column(String(100))
+	is_active: Mapped[bool] = mapped_column(default=False, nullable=False)
 	role: Mapped[str] = mapped_column(String(20), default="packaging", nullable=False)
 
-	is_banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+	first_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	last_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
+
+	# relationships
+	auth_id: Mapped[int] = mapped_column(ForeignKey(
+		"user_auth.id", ondelete="CASCADE"), index=True, unique=True, nullable=True)
+
+	auth_details: Mapped["AuthDataDB"] = relationship(back_populates="employee_account")
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
