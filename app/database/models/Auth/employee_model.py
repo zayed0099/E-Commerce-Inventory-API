@@ -13,13 +13,13 @@ class EmployeeDB(Base):
 	is_active: Mapped[bool] = mapped_column(default=False, nullable=False)
 	role: Mapped[str] = mapped_column(String(20), default="packaging", nullable=False)
 
-	first_name: Mapped[str] = mapped_column(String(20), nullable=False)
-	last_name: Mapped[str] = mapped_column(String(20), nullable=False)
-	phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
+	# first_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	# last_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	# phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
 
 	# relationships
 	auth_id: Mapped[int] = mapped_column(ForeignKey(
-		"user_auth.id", ondelete="CASCADE"), index=True, unique=True, nullable=True)
+		"user_auth.id", ondelete="CASCADE"), index=True, unique=True, nullable=False)
 
 	auth_details: Mapped["AuthDataDB"] = relationship(back_populates="employee_account")
 

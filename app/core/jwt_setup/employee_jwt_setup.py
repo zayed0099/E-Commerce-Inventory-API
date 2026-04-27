@@ -50,7 +50,7 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 		query = await db.execute(
 			select(exists().where(
 				and_(
-					EmployeeDB.id == user_id,
+					EmployeeDB.auth_id == user_id,
 					EmployeeDB.role.in_(["admin", role])
 				)
 			))
@@ -59,8 +59,9 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 
 		if record_exists:
 			admin_logger.info(
-				f"Userid : {user_id}, role : {role}] logged in.")
+				f"Employee Login: Userid : {user_id}, role : {role}]")
 			return payload
+		
 		else:
 			admin_logger.info(
 				f"Invalid Login attempt! User : {user_id}.")

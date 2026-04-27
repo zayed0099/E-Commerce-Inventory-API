@@ -11,16 +11,19 @@ class UserDB(Base):
 	id: Mapped[int] = mapped_column(primary_key=True)
 
 	is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
-	
+
 	first_name: Mapped[str] = mapped_column(String(20), nullable=False)
 	last_name: Mapped[str] = mapped_column(String(20), nullable=False)
 	phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
-	country: Mapped[str] = mapped_column(String(20), default="Bangladesh", nullable=False)
+	country: Mapped[str] = mapped_column(String(20), default="bd", nullable=False)
 
 	created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
 	updated_at: Mapped[datetime] = mapped_column(
 		default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+	auth_id: Mapped[int] = mapped_column(ForeignKey(
+		"user_auth.id", ondelete="CASCADE"), index=True, unique=True, nullable=False)
+	
 	# relationships
 	orders_summary: Mapped[List["OrderSummary"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")
@@ -30,11 +33,8 @@ class UserDB(Base):
 
 	auth_details: Mapped["AuthDataDB"] = relationship(back_populates="user_account")
 
-	auth_id: Mapped[int] = mapped_column(ForeignKey(
-		"user_auth.id", ondelete="CASCADE"), index=True, unique=True, nullable=False)
-
 	__table_args__ = (
 		CheckConstraint(
-			"country IN ('Bangladesh')", 
+			"country IN ('bd')", 
 			name='ck_user_country'),
 		)
