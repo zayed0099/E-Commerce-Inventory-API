@@ -221,3 +221,15 @@ async def update_processing_status(
 
 	except SQLAlchemyError as e:
 		raise
+
+@packg_router.get("/authenticate")
+async def auth_check(
+	current_user: dict = Depends(packaging_role_required), 
+	db: AsyncSession = Depends(get_db)):
+	
+	employee_id = current_user["employee_id"]
+
+	res = {"employee_id" : employee_id}
+	# raise Exception("test")
+	
+	return APIResponse(message="Authentication successful!", data=res)

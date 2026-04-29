@@ -27,7 +27,8 @@ root_str_enc = Hashids(
 	alphabet="QWERTYUOPADFGHJKLMNBVCXZ246789"
 )
 
-@product_mgmt_router.post("/product/new", response_model=ProductEntryResponse)
+@product_mgmt_router.post("/product/new", 
+	response_model=ProductEntryResponse, status_code=status.HTTP_201_CREATED)
 async def add_new_product(
 	data: SingleProductDataEntry,
 	# current_user: dict = Depends(stock_manager_required), 
@@ -89,7 +90,8 @@ async def add_new_product(
 		await db.rollback()
 		raise
 
-@product_mgmt_router.post("/product/add-variant", response_model=APIResponse)
+@product_mgmt_router.post("/product/add-variant", 
+	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_product_variant(
 	data: ProductVariantEntry,
 	# current_user: dict = Depends(stock_manager_required), 
@@ -137,7 +139,8 @@ async def add_product_variant(
 		await db.rollback()
 		raise
 
-@product_mgmt_router.post("/product/supplier/new-record", response_model=APIResponse)
+@product_mgmt_router.post("/product/supplier/new-record", 
+	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_supplier_for_product(
 	data: ProductSupplierLinkEntry,
 	# current_user: dict = Depends(stock_manager_required), 
@@ -175,7 +178,8 @@ async def add_supplier_for_product(
 		await db.rollback()
 		raise
 
-@product_mgmt_router.post("/supplier/new", response_model=APIResponse)
+@product_mgmt_router.post("/supplier/new", 
+	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_new_supplier(
 	data: SupplierEntry,
 	# current_user: dict = Depends(stock_manager_required), 
@@ -232,7 +236,8 @@ async def add_new_supplier(
 		await db.rollback()
 		raise
 
-@product_mgmt_router.post("/category/new", response_model=APIResponse)
+@product_mgmt_router.post("/category/new", 
+	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_new_category(
 	data: CategoryEntry,
 	# current_user: dict = Depends(stock_manager_required), 

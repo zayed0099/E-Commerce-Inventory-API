@@ -11,9 +11,9 @@ security = HTTPBearer()
 def decode_jwt(token: str) -> Optional[dict]:
 	try:
 		decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-		user_id = decoded_token.get("user_id", None)
+		auth_id = decoded_token.get("auth_id", None)
 
-		if user_id is None:
+		if auth_id is None:
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
 				detail="Invalid token payload",
@@ -39,13 +39,13 @@ def decode_jwt(token: str) -> Optional[dict]:
 			headers={"WWW-Authenticate": "Bearer"},
 		)
 
-async def create_jwt(user_id, role):
+async def create_jwt(auth_id: int, role: str):
 	now = datetime.now(timezone.utc)
 
 	access_token = jwt.encode(
 		payload={
 			"role": role, 
-			"user_id" : user_id,
+			"auth_id" : auth_id,
 			"type" : "access",
 			"iat": int(now.timestamp()),
 			"exp": int((now + timedelta(minutes=30)).timestamp())
@@ -57,7 +57,7 @@ async def create_jwt(user_id, role):
 	refresh_token = jwt.encode(
 		payload={
 			"role": role, 
-			"user_id" : user_id,
+			"auth_id" : auth_id,
 			"type" : "refresh",
 			"iat": int(now.timestamp()),
 			"exp": int((now + timedelta(minutes=60)).timestamp())

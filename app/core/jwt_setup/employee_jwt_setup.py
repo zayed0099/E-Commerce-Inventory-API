@@ -27,12 +27,11 @@ async def packaging_role_required(cred: HTTPAuthorizationCredentials = Depends(s
 	return await check_employee_role(cred, "packaging")
 
 async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
-	async with SessionLocal() as db:
+	sync_session = SessionLocal()
+	async with AsyncSession(sync_session) as db:
 		token = cred.credentials
 		payload = decode_jwt(token)
 		
-		user_id = payload["user_id"]
-
 		if not payload:
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
@@ -40,7 +39,10 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 				headers={"WWW-Authenticate": "Bearer"},
 			)
 
-		if not user_id:
+		auth_id = payload.get("auth_id")
+		user_role = payload.get("role")
+
+		if not auth_id:
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
 				detail="Invalid JWT payload",
@@ -48,25 +50,37 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 			)
 
 		query = await db.execute(
-			select(exists().where(
-				and_(
-					EmployeeDB.auth_id == user_id,
-					EmployeeDB.role.in_(["admin", role])
-				)
-			))
-		)
-		record_exists = query.scalar()
+			select(EmployeeDB.id, EmployeeDB.role)
+			.where(EmployeeDB.auth_id == auth_id))
+		employee = query.first()
 
-		if record_exists:
-			admin_logger.info(
-				f"Employee Login: Userid : {user_id}, role : {role}]")
-			return payload
-		
-		else:
-			admin_logger.info(
-				f"Invalid Login attempt! User : {user_id}.")
+		if not employee:
 			raise HTTPException(
 				status_code=status.HTTP_401_UNAUTHORIZED,
 				detail="Authentication error.",
 				headers={"WWW-Authenticate": "Bearer"},
 			)
+
+		emp_role = employee.role
+		emp_id = employee.id
+
+		valid_roles = ['admin', role]
+		
+		if emp_role in valid_roles:
+			admin_logger.info(
+				f"Employee Login: auth_id : {auth_id}, role : {emp_role}]")
+			
+			pload = {
+				"auth_id" : auth_id,
+				"employee_id" : emp_id,
+				"role" : emp_role
+			}
+			return pload
+
+		else:
+			raise HTTPException(
+				status_code=status.HTTP_401_UNAUTHORIZED,
+				detail="Authentication error.",
+				headers={"WWW-Authenticate": "Bearer"},
+			)
+			

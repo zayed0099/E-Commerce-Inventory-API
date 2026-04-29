@@ -27,7 +27,7 @@ ex:  await db.add()
 @app.on_event("startup")
 async def on_startup():
 	await init_db()
-	admin_logger.info(f"Server started at {current_datetime}")
+	# admin_logger.info(f"Server started at {current_datetime}")
 	# start_scheduler(app)
 
 # Global Exception Handler
@@ -43,8 +43,9 @@ app.include_router(order_packaging.packg_router)
 # App Shutdown settings
 @app.on_event("shutdown")
 def shutdown_event():
-	admin_logger.info(f"Server being shutdown at {current_datetime}")
-
+	# admin_logger.info(f"Server being shutdown at {current_datetime}")
+	pass
+	
 if __name__ == "__main__":
 	uvicorn.run(
 		"main:app",
