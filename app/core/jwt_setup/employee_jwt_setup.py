@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Cookie
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from sqlalchemy import select, exists, and_
@@ -14,23 +14,26 @@ from app.database import EmployeeDB
 from .jwt_config import security, decode_jwt
 from app.core.logging import admin_logger
 
-async def admin_required(cred: HTTPAuthorizationCredentials = Depends(security)):
+async def admin_required(access_token: str = Cookie(None)):
 	return await check_employee_role(cred, "admin")
 
-async def stock_manager_required(cred: HTTPAuthorizationCredentials = Depends(security)):
+async def stock_manager_required(access_token: str = Cookie(None)):
 	return await check_employee_role(cred, "stock_manager")
 
-async def support_role_required(cred: HTTPAuthorizationCredentials = Depends(security)):
+async def support_role_required(access_token: str = Cookie(None)):
 	return await check_employee_role(cred, "support")
 
-async def packaging_role_required(cred: HTTPAuthorizationCredentials = Depends(security)):
+async def packaging_role_required(access_token: str = Cookie(None)):
 	return await check_employee_role(cred, "packaging")
 
-async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
+async def check_employee_role(access_token: str = Cookie(None)):
+	
+	if not access_token:
+		raise HTTPException(status_code=401, detail="Not authenticated")
+
 	sync_session = SessionLocal()
 	async with AsyncSession(sync_session) as db:
-		token = cred.credentials
-		payload = decode_jwt(token)
+		payload = decode_jwt(access_token)
 		
 		if not payload:
 			raise HTTPException(

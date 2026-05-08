@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import (
+	APIRouter, Response, HTTPException, status, Depends, Cookie)
 from sqlalchemy import select
 # from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -31,8 +32,8 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 	result = await db.execute(
 		select(AuthDataDB.username, AuthDataDB.email)
 		.where(
-		    (AuthDataDB.username == data.username) |
-		    (AuthDataDB.email == data.email)
+			(AuthDataDB.username == data.username) |
+			(AuthDataDB.email == data.email)
 	))
 	existing = result.scalars().first()
 
@@ -66,8 +67,9 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 		await db.rollback()
 		raise
 
-@auth_router.post("/login/cred", response_model=TokenResponse)
-async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
+@auth_router.post("/login/cred", response_model=APIResponse)
+async def User_Login(
+	data: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
 	
 	result = await db.execute(
 		select(
@@ -110,17 +112,72 @@ async def User_Login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 			auth_id=auth_id, 
 			role=role)
 		
+		"""
 		return TokenResponse(
 			access_token=access_token,
 			refresh_token=refresh_token)
-	
+		"""
+			
+		response.set_cookie(
+			key="access_token",
+			value=access_token,
+			httponly=True,
+			secure=True,
+			samesite="lax",
+			max_age=1800 # 30min in seconds
+		)
+		response.set_cookie(
+			key="refresh_token",
+			value=refresh_token,
+			httponly=True,
+			secure=True,
+			samesite="lax",
+			max_age=3600 # 60min in seconds
+		)
+
+		return APIResponse(
+			message="Login Successful!")
+
 	except VerifyMismatchError:
 		raise HTTPException(status_code=401, detail="Invalid credentials")
 
-
-# @auth_router.delete("/logout")
-# async def logout_user(
-# 	current_user: dict = Depends(get_current_user),
-# 	db: AsyncSession = Depends(get_db)):
+@auth_router.patch("/refresh")
+async def refresh(
+	response: Response,
+	refresh_token: str = Cookie(None)
+):
+	if not refresh_token:
+		raise HTTPException(status_code=401, detail="Refresh token not found.")
 	
-# 	await logout_user(current_user["user_id"])
+	payload = decode_jwt(refresh_token)
+	
+	new_access, new_refresh = await create_jwt(
+		auth_id=payload["auth_id"],
+		role=payload["role"]
+	)
+	
+	response.set_cookie(
+			key="access_token",
+			value=new_access,
+			httponly=True,
+			secure=True,
+			samesite="lax",
+			max_age=1800 # 30min in seconds
+		)
+
+	response.set_cookie(
+		key="refresh_token",
+		value=new_refresh,
+		httponly=True,
+		secure=True,
+		samesite="lax",
+		max_age=3600 # 60min in seconds
+	)
+	
+	return {"message": "Token refresh Successful."}
+
+@auth_router.post("/logout")
+async def logout(response: Response):
+	response.delete_cookie("access_token")
+	response.delete_cookie("refresh_token")
+	return {"message": "Logged out"}

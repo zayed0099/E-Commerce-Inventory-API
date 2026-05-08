@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Cookie
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from sqlalchemy import select, exists, and_
@@ -10,9 +10,12 @@ from app.database.db_for_old_pc import (
 	SessionLocalSync as SessionLocal, get_db
 )
 
-async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
-	token = cred.credentials
-	payload = decode_jwt(token)
+async def get_current_user(access_token: str = Cookie(None)):
+	
+	if not access_token:
+		raise HTTPException(status_code=401, detail="Not authenticated")
+
+	payload = decode_jwt(access_token)
 
 	if not payload:
 		raise HTTPException(
