@@ -68,7 +68,7 @@ async def check_employee_role(cred: HTTPAuthorizationCredentials, role: str):
 		
 		if emp_role in valid_roles:
 			admin_logger.info(
-				f"Employee Login: auth_id : {auth_id}, role : {emp_role}]")
+				f"Employee Login! auth_id : {auth_id}, role : {emp_role}]")
 			
 			pload = {
 				"auth_id" : auth_id,

@@ -6,6 +6,7 @@ from sqlalchemy.sql import and_
 from typing import List
 from datetime import datetime, timedelta
 from hashids import Hashids
+
 # Local Import
 from app.database.db_for_old_pc import (
 	get_db, PentiumAsyncSession as AsyncSession)
@@ -40,7 +41,7 @@ async def manage_all_orderitem(
 
 	offset = (page - 1) * per_page
 	"""
-	Example Output: 
+	Example Output of the query below: 
 	[
 		(1, 3, 35000, False, False, 2), 
 		(2, 1, 25000, False, False, 4)

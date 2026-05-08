@@ -1,5 +1,4 @@
 # temporarily ignoring auth files. to be rebult later
-app/routers/auth/
 *.db-wal
 *.db-shm
 

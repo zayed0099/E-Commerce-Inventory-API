@@ -38,6 +38,8 @@ async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security
 			.where(UserDB.auth_id == auth_id)
 		)
 		user = query.first()
+		
+		user_id = user.id
 	
 	if not user:
 		raise HTTPException(
@@ -48,7 +50,7 @@ async def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security
 
 	pload = {
 		"auth_id" : auth_id,
-		"user_id" : user.id,
+		"user_id" : user_id,
 		"role" : role
 	}		
 
