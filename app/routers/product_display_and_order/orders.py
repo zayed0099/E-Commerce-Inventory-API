@@ -42,17 +42,27 @@ hashid = Hashids(
 		alphabet=ALPHABET_ENC
 	)
 
-@order_router.post("/new-order")
-async def add_new_order(
+ORDER_RESEREVATION_SYSTEM_STATUS = False
+ORDER_DIRECT_SYSTEM_STATUS = True
+
+if ORDER_DIRECT_SYSTEM_STATUS == ORDER_RESEREVATION_SYSTEM_STATUS:
+	raise Exception("Only one system can be active.")
+
+@order_router.post("/new-order-res", status_code=status.HTTP_201_CREATED)
+async def add_new_order_with_reservation(
 	data: NewOrder,
 	current_user: dict = Depends(get_current_user), 
 	db: AsyncSession = Depends(get_db)):
-	
 	"""
 		this endpoint only takes the order> adds data to OrderTracking, OrderItem and 
 		OrderSummary > sends user hashed order tracking key(user_id, OrderTracking.id)
 		if user confirms the order,then he can pay in advance or select COD
 	"""
+	if not ORDER_RESEREVATION_SYSTEM_STATUS:
+		raise HTTPException(
+			status_code=503, 
+			detail="This feature is currently unavailable."
+		)
 	try:
 		user_id = current_user["user_id"]
 		tracking_id = None
@@ -133,8 +143,20 @@ async def add_new_order(
 				))
 				tracking_update = await db.execute(tracking_query)
 
+				order_logger.info(
+					"Order placed",
+					extra={
+						"tracking_id": tracking_id,
+						"user_id": user_id
+					})
+			
 			except SQLAlchemyError:
-				order_logger.exception(f"Tracking_id: {tracking_id}, status update to 'placed' failed.")
+				order_logger.exception(
+					"Status update to 'placed' failed",
+					extra={
+						"tracking_id": tracking_id,
+						"user_id": user_id
+					})
 				raise
 
 		await db.commit()
@@ -166,14 +188,170 @@ async def add_new_order(
 						db=new_session,
 						tracking_id=tracking_id
 					)
-					# no commit here.
 
 			except Exception:
-				order_logger.exception(
-					f"Order Tracking(id:{tracking_id}) status update to 'cancelled' and stock release failed."
-				)
+				order_logger.info(
+					"Status update to 'cancelled' and stock release failed.",
+					extra={
+						"tracking_id": tracking_id,
+						"user_id": user_id
+					})
 		
 		order_logger.exception(f"Order failed: {er}")
+		
+		raise
+
+
+# order Without any reservation system
+@order_router.post("/new-order", status_code=status.HTTP_201_CREATED)
+async def add_new_order_direct(
+	data: NewOrder,
+	current_user: dict = Depends(get_current_user), 
+	db: AsyncSession = Depends(get_db)):
+	
+	if not ORDER_DIRECT_SYSTEM_STATUS:
+			raise HTTPException(
+				status_code=503, 
+				detail="This feature is currently unavailable."
+			)
+
+	try:
+		user_id = current_user["user_id"]
+		tracking_id = None
+
+		order_tracking_entry = OrderTracking(
+				pay_method = data.pay_method,
+				payment_status = data.payment_status,
+				user_id=user_id,
+				order_status='creating'
+		)
+
+		await db.add(order_tracking_entry)
+		await db.flush()
+
+		tracking_id = order_tracking_entry.id
+
+		if not isinstance(tracking_id, int):
+			raise HTTPException(
+				status_code=500,
+				detail="An error occured with Tracking ID generation.")
+
+		hashed_order_tracking_id = hashid.encode(user_id, tracking_id)
+
+		for product in data.items:
+			quantity = product.quantity
+			product_id = product.product_id	
+			sku_id = product.sku_id
+			catg_id = product.catg_id
+			unit_price_at_order = product.unit_price_at_order
+
+			order_item_entry = OrderItem(
+				tracking_id=tracking_id,
+				product_id=product_id,
+				sku_id=sku_id,
+				catg_id=catg_id,
+				quantity=quantity,
+				unit_price_at_order=unit_price_at_order)
+		
+			await db.add(order_item_entry)
+
+			update_query = (
+				update(Inventory)
+				.where(
+					Inventory.is_archived.is_(False),
+					Inventory.id == sku_id,
+					Inventory.product_id == product_id,
+					Inventory.in_stock.is_(True),
+					Inventory.current_product_stock >= quantity
+				)
+				.values(
+					current_product_stock = Inventory.current_product_stock - quantity,
+					product_stock_on_hold = Inventory.product_stock_on_hold + quantity
+				)
+			)
+
+			result = await db.execute(update_query)
+		
+			if not result.rowcount or result.rowcount < 1:
+				raise HTTPException(
+					status_code=400,
+					detail="An error occured with product stock")
+
+		order_summary_entry = OrderSummary(
+				user_id=user_id,
+				tracking_id=tracking_id,
+				hashed_tracking_id=hashed_order_tracking_id)
+		await db.add(order_summary_entry)
+
+		delivery_address_entry = DeliveryDetails(
+				address_line=data.address_line,
+				postal_code=data.postal_code,
+				city=data.city,
+				country=data.country,
+				sec_email=data.sec_email,
+				sec_phone=data.sec_phone,
+				tracking_id=tracking_id
+			)
+		await db.add(delivery_address_entry)
+		
+		if tracking_id is not None:
+			try:
+				tracking_query = (
+					update(OrderTracking)
+					.where(OrderTracking.id == tracking_id)
+					.values(
+						order_status = 'placed'
+				))
+				tracking_update = await db.execute(tracking_query)
+
+				order_logger.info(
+					"Order placed",
+					extra={
+						"tracking_id": tracking_id,
+						"user_id": user_id
+					})
+			
+			except SQLAlchemyError:
+				order_logger.exception(
+					"Status update to 'placed' failed",
+					extra={
+						"tracking_id": tracking_id,
+						"user_id": user_id
+					})
+
+				raise
+		
+		await db.commit()
+
+		return NewOrderConfirmation(tracking_id=hashed_order_tracking_id)
+
+	except SQLAlchemyError:
+		await db.rollback()
+
+		if tracking_id is not None:
+			try:
+				sync_session = SessionLocal()
+				async with AsyncSession(sync_session) as new_session:
+				# async with new_session.begin():
+					"""
+					[If the code uses Real AsyncSession then un-comment the above part and 
+					indent the below code inside it]
+					"""
+					tracking_query = (
+						update(OrderTracking)
+						.where(OrderTracking.id == tracking_id)
+						.values(order_status = 'cancelled')
+					)
+					tracking_update = await new_session.execute(tracking_query) 
+				
+			except Exception:
+				order_logger.info(
+					"Status update to 'cancelled' and stock release failed.",
+					extra={
+						"tracking_id": tracking_id,
+						"user_id": user_id
+					})
+
 		raise
 
 @order_router.get("/authenticate")
@@ -184,6 +362,6 @@ async def auth_check(
 	user_id = current_user["user_id"]
 
 	res = {"user_id" : user_id}
-	raise Exception("test")
+	# raise Exception("test")
 	
 	return APIResponse(message="Authentication successful!", data=res)
