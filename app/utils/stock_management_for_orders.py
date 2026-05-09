@@ -6,6 +6,10 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.core.logging import order_logger
+from app.database.db_for_old_pc import (
+	PentiumAsyncSession as AsyncSession,
+	SessionLocalSync as SessionLocal, get_db
+)
 
 async def check_product_availability( 
 		inventory_db,

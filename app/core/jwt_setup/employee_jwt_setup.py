@@ -15,18 +15,18 @@ from .jwt_config import security, decode_jwt
 from app.core.logging import admin_logger
 
 async def admin_required(access_token: str = Cookie(None)):
-	return await check_employee_role(cred, "admin")
+	return await check_employee_role("admin", access_token)
 
 async def stock_manager_required(access_token: str = Cookie(None)):
-	return await check_employee_role(cred, "stock_manager")
+	return await check_employee_role("stock_manager", access_token)
 
 async def support_role_required(access_token: str = Cookie(None)):
-	return await check_employee_role(cred, "support")
+	return await check_employee_role("support", access_token)
 
 async def packaging_role_required(access_token: str = Cookie(None)):
-	return await check_employee_role(cred, "packaging")
+	return await check_employee_role("packaging", access_token)
 
-async def check_employee_role(access_token: str = Cookie(None)):
+async def check_employee_role(role, access_token: str = Cookie(None)):
 	
 	if not access_token:
 		raise HTTPException(status_code=401, detail="Not authenticated")

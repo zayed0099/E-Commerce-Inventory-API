@@ -80,8 +80,8 @@ async def add_new_product(
 
 		p_id = new_product_entry.id
 
-		# admin_logger.info(
-		# 	f"[PRODUCT_ENTRY]-> product_id: {p_id}, user_id: {user_id}")
+		admin_logger.info(
+			f"[PRODUCT_ENTRY]-> product_id: {p_id}, user_id: {user_id}")
 
 		return ProductEntryResponse(
 			message="Product data entry successful.", product_id=p_id)

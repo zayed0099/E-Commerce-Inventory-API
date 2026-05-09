@@ -29,13 +29,18 @@ ph = PasswordHasher()
 	"/signup", status_code=status.HTTP_201_CREATED, response_model=APIResponse)
 async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 	
+	pass_len = len(unhashed_password)
+	
+	if not pass_len >= 8:
+		raise HTTPException(status_code=400, detail="Create a stronger password!")
+		
 	result = await db.execute(
 		select(AuthDataDB.username, AuthDataDB.email)
 		.where(
 			(AuthDataDB.username == data.username) |
 			(AuthDataDB.email == data.email)
 	))
-	existing = result.scalars().first()
+	existing = result.first()
 
 	if existing.email == data.email:
 		raise HTTPException(status_code=400, detail="Invalid Credentials. Try Again.")
@@ -44,10 +49,6 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 		raise HTTPException(status_code=400, detail="Username Taken.")
 
 	unhashed_password = data.password
-	pass_len = len(unhashed_password)
-	
-	if not pass_len >= 8:
-		raise HTTPException(status_code=400, detail="Create a stronger password!")
 
 	hashed_password = ph.hash(unhashed_password)
 
@@ -151,14 +152,14 @@ async def refresh(
 	
 	payload = decode_jwt(refresh_token)
 	
-	new_access, new_refresh = await create_jwt(
+	new_access_token, new_refresh_token = await create_jwt(
 		auth_id=payload["auth_id"],
 		role=payload["role"]
 	)
 	
 	response.set_cookie(
 			key="access_token",
-			value=new_access,
+			value=new_access_token,
 			httponly=True,
 			secure=True,
 			samesite="lax",
@@ -167,7 +168,7 @@ async def refresh(
 
 	response.set_cookie(
 		key="refresh_token",
-		value=new_refresh,
+		value=new_refresh_token,
 		httponly=True,
 		secure=True,
 		samesite="lax",
