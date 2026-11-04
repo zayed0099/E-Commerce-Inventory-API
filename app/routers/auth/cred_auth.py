@@ -1,16 +1,14 @@
 from fastapi import (
 	APIRouter, Response, HTTPException, status, Depends, Cookie)
 from sqlalchemy import select
-# from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from datetime import datetime, timedelta
 
 # Local Import
-from app.database.db_for_old_pc import (
-	PentiumAsyncSession as AsyncSession, get_db)
-# from app.database.db import get_db
+from app.database.db import get_db
 from app.schemas import (
 	TokenResponse, UserCreate, UserLogin, APIResponse)
 from app.core.jwt_setup import get_current_user, create_jwt

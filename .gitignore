@@ -1,7 +1,7 @@
 # temporarily ignoring auth files. to be rebult later
 *.db-wal
 *.db-shm
-
+*.vscode
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

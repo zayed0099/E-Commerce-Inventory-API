@@ -1,12 +1,14 @@
 import asyncio
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
+# from apscheduler.schedulers.asyncio import AsyncIOScheduler
+# from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from app.database.db import get_db
 from app.core.logging import admin_logger
-from app.tasks import inventory_in_stock_manager
+# from app.tasks import inventory_in_stock_manager
 
 def start_scheduler(app: FastAPI):
+	pass
+	"""
 	scheduler = AsyncIOScheduler()
 	
 	scheduler.add_job(
@@ -18,3 +20,4 @@ def start_scheduler(app: FastAPI):
 
 	scheduler.start()
 	admin_logger.info("Server started and scheduler initialized.")
+	"""

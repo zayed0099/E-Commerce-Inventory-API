@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select, exists, update
-# from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import and_
 from typing import List
@@ -8,8 +8,7 @@ from datetime import datetime, timedelta
 from hashids import Hashids
 
 # Local Import
-from app.database.db_for_old_pc import (
-	get_db, PentiumAsyncSession as AsyncSession)
+from app.database.db import get_db
 from app.database import (
 	OrderTracking, OrderItem, OrderSummary, DeliveryDetails, 
 	Products, Category, Inventory, ProductVariant)

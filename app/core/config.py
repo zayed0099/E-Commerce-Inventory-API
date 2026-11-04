@@ -8,7 +8,10 @@ load_dotenv()
 TZ = os.environ.get("TZ", "UTC")
 
 # Database
-DATABASE_NAME = os.environ.get("DATABASE_NAME", "ecomm_manage.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", None)
+
+if DATABASE_URL is None:
+	raise RuntimeError("Database URL is not set")
 
 # JWT
 JWT_SECRET = os.environ.get("JWT_SECRET")

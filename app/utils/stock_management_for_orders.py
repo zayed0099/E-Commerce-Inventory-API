@@ -1,15 +1,11 @@
-# from sqlalchemy.ext.asyncio import AsyncSession
-from app.database.db_for_old_pc import PentiumAsyncSession as AsyncSession
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, exists, func, update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.core.logging import order_logger
-from app.database.db_for_old_pc import (
-	PentiumAsyncSession as AsyncSession,
-	SessionLocalSync as SessionLocal, get_db
-)
+from app.database.db import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 async def check_product_availability( 
 		inventory_db,

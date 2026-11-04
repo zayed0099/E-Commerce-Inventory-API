@@ -5,10 +5,8 @@ from typing import Optional
 from sqlalchemy import select, exists, and_
 from .jwt_config import security, decode_jwt
 from app.database import UserDB
-from app.database.db_for_old_pc import (
-	PentiumAsyncSession as AsyncSession,
-	SessionLocalSync as SessionLocal, get_db
-)
+from app.database.db import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 async def get_current_user(access_token: str = Cookie(None)):
 	

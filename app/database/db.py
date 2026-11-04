@@ -3,14 +3,13 @@ from sqlalchemy.ext.asyncio import (
 	async_sessionmaker,
 	AsyncSession)
 from sqlalchemy.orm import DeclarativeBase
+# from app.core.config import DATABASE_URL
+from dotenv import load_dotenv
 import os
-from app.core.config import DATABASE_NAME
 
-basedir = os.path.abspath(os.path.dirname(__file__))
-DATABASE_URL = f"sqlite+aiosqlite:///{os.path.join(basedir, DATABASE_NAME)}"
+load_dotenv()
+DATABASE_URL = os.environ.get("DATABASE_URL", None)
 
-# sync db url, for alembic
-SYNC_ALEMBIC_DB_URL = f"sqlite:///{os.path.join(basedir, DATABASE_NAME)}"
 
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 SessionLocal = async_sessionmaker(

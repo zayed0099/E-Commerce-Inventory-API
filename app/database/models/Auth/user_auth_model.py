@@ -2,8 +2,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean
 from typing import List, Union
 from datetime import datetime
-# from app.database.db import Base
-from app.database.db_for_old_pc import Base
+from app.database.db import Base
 
 class AuthDataDB(Base):
 	__tablename__ = "user_auth"
