@@ -11,7 +11,7 @@ class Suppliers(Base):
 	is_archived: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
 
 	name: Mapped[str] = mapped_column(String(100), nullable=False)
-	email: Mapped[str] = mapped_column(Text(50), nullable=False)
+	email: Mapped[str] = mapped_column(String(50), nullable=False)
 	phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
 	is_supplying: Mapped[bool] = mapped_column(default=False, nullable=False)
@@ -46,7 +46,7 @@ class SupplierDetails(Base):
 	city: Mapped[str] = mapped_column(String(100), nullable=False)
 	country: Mapped[str] = mapped_column(String(100), nullable=False)
 
-	sec_email: Mapped[str] = mapped_column(Text(50), nullable=False)
+	sec_email: Mapped[str] = mapped_column(String(50), nullable=False)
 	sec_phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
 	supp_id: Mapped[int] = mapped_column(ForeignKey(

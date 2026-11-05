@@ -30,3 +30,16 @@ async def init_db():
 async def get_db():
 	async with SessionLocal() as session:
 		yield session
+
+# async def init_db():
+# 	try:
+# 		import app.database.models
+# 		async with engine.begin() as conn:
+# 			await conn.run_sync(Base.metadata.create_all)
+
+# 	except Exception as e:
+# 		print("\n========== DATABASE INIT FAILED ==========")
+# 		print(f"Error type: {type(e).__name__}")
+# 		print(f"Error: {e}")
+# 		print("==========================================\n")
+# 		raise

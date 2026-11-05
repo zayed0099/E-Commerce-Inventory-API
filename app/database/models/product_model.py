@@ -21,7 +21,7 @@
 			=> single/multiple entry for its every version in productvariant
 """
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean, Text
+from sqlalchemy import String, Integer, ForeignKey, CheckConstraint, Boolean
 from typing import List
 from datetime import datetime
 from app.database.db import Base
@@ -36,7 +36,7 @@ class Products(Base):
 	root_str: Mapped[str] = mapped_column(String(4), nullable=True)
 
 	product_name: Mapped[str] = mapped_column(String(100), nullable=False)
-	short_desc: Mapped[str] = mapped_column(Text(255), nullable=False)
+	short_desc: Mapped[str] = mapped_column(String(255), nullable=False)
 	image_link: Mapped[str] = mapped_column(String(200), nullable=False)
 	current_price: Mapped[int] = mapped_column(Integer, nullable=False)
 	in_stock: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
