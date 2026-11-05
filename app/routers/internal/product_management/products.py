@@ -73,8 +73,9 @@ async def add_new_product(
 				catg_id=catg_id
 			)
 
-		await db.add(new_product_entry)
+		db.add(new_product_entry)
 		await db.commit()
+		await db.refresh(new_product_entry)
 
 		p_id = new_product_entry.id
 
@@ -111,7 +112,7 @@ async def add_product_variant(
 				current_product_stock=current_product_stock,
 				product_id = product_id
 			)
-		await db.add(new_variant_entry)
+		db.add(new_variant_entry)
 		await db.flush()
 
 		sku_id = new_variant_entry.id
@@ -123,7 +124,7 @@ async def add_product_variant(
 					attribute = key,
 					attribute_value = value
 				)
-			await db.add(new_attr_entry)
+			db.add(new_attr_entry)
 
 		await db.commit()
 
@@ -167,7 +168,7 @@ async def add_supplier_for_product(
 		)
 
 	try:
-		await db.add(new_entry)
+		db.add(new_entry)
 		await db.commit()
 
 		return APIResponse(message="Supplier and Product Link entry successful.")
@@ -207,7 +208,7 @@ async def add_new_supplier(
 				is_supplying = is_supplying,
 				supp_type = supp_type
 			)
-		await db.add(new_supplier)
+		db.add(new_supplier)
 		await db.flush()
 
 		supp_id = new_supplier.id
@@ -222,7 +223,7 @@ async def add_new_supplier(
 				supp_id = supp_id
 			)
 
-		await db.add(supplier_details)
+		db.add(supplier_details)
 		await db.commit()
 
 		# admin_logger.info(
@@ -247,7 +248,7 @@ async def add_new_category(
 		new_catg = Category(
 			category=category, normalized_category= category.strip().lower())
 		
-		await db.add(new_catg)
+		db.add(new_catg)
 		await db.commit()
 		return APIResponse(message="Catgeory entry successful.")
 

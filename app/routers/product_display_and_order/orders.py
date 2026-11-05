@@ -69,7 +69,7 @@ async def add_new_order_with_reservation(
 				user_id=user_id,
 				order_status='creating')
 
-		await db.add(order_tracking_entry)
+		db.add(order_tracking_entry)
 		await db.flush()
 
 		tracking_id = order_tracking_entry.id
@@ -110,13 +110,13 @@ async def add_new_order_with_reservation(
 				quantity=quantity,
 				unit_price_at_order=product.unit_price_at_order)
 		
-			await db.add(order_item_entry)
+			db.add(order_item_entry)
 
 		order_summary_entry = OrderSummary(
 				user_id=user_id,
 				tracking_id=tracking_id,
 				hashed_tracking_id=hashed_order_tracking_id)
-		await db.add(order_summary_entry)
+		db.add(order_summary_entry)
 
 		delivery_address_entry = DeliveryDetails(
 				address_line=data.address_line,
@@ -127,7 +127,7 @@ async def add_new_order_with_reservation(
 				sec_phone=data.sec_phone,
 				tracking_id=tracking_id
 			)
-		await db.add(delivery_address_entry)
+		db.add(delivery_address_entry)
 
 		if tracking_id is not None:
 			try:
@@ -222,7 +222,7 @@ async def add_new_order_direct(
 				order_status='creating'
 		)
 
-		await db.add(order_tracking_entry)
+		db.add(order_tracking_entry)
 		await db.flush()
 
 		tracking_id = order_tracking_entry.id
@@ -249,7 +249,7 @@ async def add_new_order_direct(
 				quantity=quantity,
 				unit_price_at_order=unit_price_at_order)
 		
-			await db.add(order_item_entry)
+			db.add(order_item_entry)
 
 			update_query = (
 				update(Inventory)
@@ -277,7 +277,7 @@ async def add_new_order_direct(
 				user_id=user_id,
 				tracking_id=tracking_id,
 				hashed_tracking_id=hashed_order_tracking_id)
-		await db.add(order_summary_entry)
+		db.add(order_summary_entry)
 
 		delivery_address_entry = DeliveryDetails(
 				address_line=data.address_line,
@@ -288,7 +288,7 @@ async def add_new_order_direct(
 				sec_phone=data.sec_phone,
 				tracking_id=tracking_id
 			)
-		await db.add(delivery_address_entry)
+		db.add(delivery_address_entry)
 		
 		if tracking_id is not None:
 			try:
@@ -326,20 +326,15 @@ async def add_new_order_direct(
 
 		if tracking_id is not None:
 			try:
-				sync_session = SessionLocal()
-				async with AsyncSession(sync_session) as new_session:
-				# async with new_session.begin():
-					"""
-					[If the code uses Real AsyncSession then un-comment the above part and 
-					indent the below code inside it]
-					"""
-					tracking_query = (
-						update(OrderTracking)
-						.where(OrderTracking.id == tracking_id)
-						.values(order_status = 'cancelled')
-					)
-					tracking_update = await new_session.execute(tracking_query) 
-				
+				async with AsyncSessionLocal() as new_session:
+					async with new_session.begin():
+						tracking_query = (
+							update(OrderTracking)
+							.where(OrderTracking.id == tracking_id)
+							.values(order_status = 'cancelled')
+						)
+						tracking_update = await new_session.execute(tracking_query) 
+					
 			except Exception:
 				order_logger.info(
 					"Status update to 'cancelled' and stock release failed.",

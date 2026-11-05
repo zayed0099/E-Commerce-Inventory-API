@@ -27,6 +27,7 @@ ph = PasswordHasher()
 	"/signup", status_code=status.HTTP_201_CREATED, response_model=APIResponse)
 async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 	
+	unhashed_password = data.password
 	pass_len = len(unhashed_password)
 	
 	if not pass_len >= 8:
@@ -40,13 +41,12 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 	))
 	existing = result.first()
 
-	if existing.email == data.email:
-		raise HTTPException(status_code=400, detail="Invalid Credentials. Try Again.")
+	if existing:
+		if existing.email == data.email:
+			raise HTTPException(status_code=400, detail="Invalid Credentials. Try Again.")
 
-	if existing.username == data.username:
-		raise HTTPException(status_code=400, detail="Username Taken.")
-
-	unhashed_password = data.password
+		if existing.username == data.username:
+			raise HTTPException(status_code=400, detail="Username Taken.")
 
 	hashed_password = ph.hash(unhashed_password)
 
@@ -56,7 +56,7 @@ async def new_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 			email=data.email)
 
 	try:
-		await db.add(db_item)
+		db.add(db_item)
 		await db.commit()
 		# await db.refresh(db_item)
 		
