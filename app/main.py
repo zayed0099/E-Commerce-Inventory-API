@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 #from starlette.middleware.sessions import SessionMiddleware
 from datetime import datetime
 from app.database.db import init_db
@@ -11,15 +12,22 @@ from app.routers.internal import order_packaging
 from app.core.logging import register_exception_handlers
 # from app.core.scheduler import start_scheduler
 
-app = FastAPI()
-current_datetime = datetime.now()
+from contextlib import asynccontextmanager
 
-# Create tables at startup + APScheduler Startup
-@app.on_event("startup")
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+	# startup
+	start_time = datetime.now()
 	await init_db()
-	# admin_logger.info(f"Server started at {current_datetime}")
-	# start_scheduler(app)
+	admin_logger.info(f"Server started at {start_time}")
+
+	yield
+
+	# shutdown
+	end_time = datetime.now()
+	admin_logger.info(f"Server being shutdown at {end_time}")
+
+app = FastAPI(lifespan=lifespan)
 
 # Global Exception Handler
 register_exception_handlers(app)
@@ -31,11 +39,6 @@ app.include_router(product_display.product_display_router)
 app.include_router(orders.order_router)
 app.include_router(order_packaging.packg_router)
 
-# App Shutdown settings
-@app.on_event("shutdown")
-def shutdown_event():
-	# admin_logger.info(f"Server being shutdown at {current_datetime}")
-	pass
 	
 if __name__ == "__main__":
 	uvicorn.run(

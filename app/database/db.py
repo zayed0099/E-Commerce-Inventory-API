@@ -3,13 +3,14 @@ from sqlalchemy.ext.asyncio import (
 	async_sessionmaker,
 	AsyncSession)
 from sqlalchemy.orm import DeclarativeBase
-# from app.core.config import DATABASE_URL
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 DATABASE_URL = os.environ.get("DATABASE_URL", None)
 
+if not DATABASE_URL:
+	raise ValueError("DATABASE_URL environment variable is not set.")
 
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 SessionLocal = async_sessionmaker(

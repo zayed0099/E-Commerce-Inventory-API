@@ -165,25 +165,20 @@ async def add_new_order_with_reservation(
 		# updating the tracking status
 		if tracking_id is not None:
 			try:
-				sync_session = SessionLocal()
-				async with AsyncSession(sync_session) as new_session:
-					# async with new_session.begin():
-					"""
-					[If the code uses Real AsyncSession then un-comment the above part and 
-					indent the below code inside it]
-					"""
-					tracking_query = (
-						update(OrderTracking)
-						.where(OrderTracking.id == tracking_id)
-						.values(order_status = 'cancelled')
-					)
-					tracking_update = await new_session.execute(tracking_query) 
-						 
-					release_stocks = await release_reserved_stocks(
-						reservation_db=ReserveStock,
-						db=new_session,
-						tracking_id=tracking_id
-					)
+				async with AsyncSession() as new_session:
+					async with new_session.begin():
+						tracking_query = (
+							update(OrderTracking)
+							.where(OrderTracking.id == tracking_id)
+							.values(order_status = 'cancelled')
+						)
+						tracking_update = await new_session.execute(tracking_query) 
+								
+						release_stocks = await release_reserved_stocks(
+							reservation_db=ReserveStock,
+							db=new_session,
+							tracking_id=tracking_id
+						)
 
 			except Exception:
 				order_logger.info(

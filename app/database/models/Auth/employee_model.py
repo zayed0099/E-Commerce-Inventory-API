@@ -12,9 +12,18 @@ class EmployeeDB(Base):
 	is_active: Mapped[bool] = mapped_column(default=False, nullable=False)
 	role: Mapped[str] = mapped_column(String(20), default="packaging", nullable=False)
 
-	# first_name: Mapped[str] = mapped_column(String(20), nullable=False)
-	# last_name: Mapped[str] = mapped_column(String(20), nullable=False)
-	# phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
+	first_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	last_name: Mapped[str] = mapped_column(String(20), nullable=False)
+	
+	address_line: Mapped[str] = mapped_column(String(200), nullable=False)
+	postal_code: Mapped[str] = mapped_column(String(10), nullable=False)
+	city: Mapped[str] = mapped_column(String(100), nullable=False)
+	country: Mapped[str] = mapped_column(String(100), nullable=False)
+
+	phone: Mapped[str] = mapped_column(String(20), nullable=False)
+	
+	sec_email: Mapped[str] = mapped_column(String(50), nullable=True)
+	sec_phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
 	# relationships
 	auth_id: Mapped[int] = mapped_column(ForeignKey(

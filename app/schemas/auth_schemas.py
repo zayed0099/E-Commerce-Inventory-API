@@ -16,3 +16,12 @@ class UserCreate(BaseModel):
 	email : str
 	password : str
 
+class EmployeeVerification(BaseModel):
+	
+	address_line: str
+	postal_code: str
+	city: str
+	country: str
+	phone: str
+	sec_email: Optional[str] = None
+	sec_phone: str
