@@ -99,13 +99,12 @@ def create_product_data():
 
 	return product_payload, variant_payload
 
-def post_data_to_endpoint(product_payload: dict, variant_payload: dict):
+def post_data_to_endpoint(product_payload: dict, variant_payload: dict, cookies: dict):
 	url_product = "http://127.0.0.1:8000/api/v1/internal/product/new"
-	product_response = req.post(url_product, json=product_payload)
+	product_response = req.post(url_product, json=product_payload, cookies=cookies)
 
 	if not product_response.status_code in [200, 201]:
 		print("Product Entry Failed!")
-		exit()
 
 	data_from_product_entry = product_response.json()
 	product_id = data_from_product_entry["product_id"]
@@ -119,17 +118,25 @@ def post_data_to_endpoint(product_payload: dict, variant_payload: dict):
 			"p_id" : product_id, "data_from_product_entry" : data_from_product_entry})
 
 	url_variant = "http://127.0.0.1:8000/api/v1/internal/product/add-variant"
-	variant_response = req.post(url_variant, json=variant_payload)
+	variant_response = req.post(url_variant, json=variant_payload, cookies=cookies)
 
 	if not variant_response.status_code in [200, 201]:
 		print({"err" : "Product variant entry failed!","rsn" : variant_response.text})
-		exit()
 
 	print("Product and Product Variant Data Entry Successful!")
 
 
 product_amnt = int(input("How many product entry do you want? : "))
+jwt_token = input("Enter your JWT token: ")
+
+cookies = {
+    "access_token": jwt_token
+}
 
 for _ in range(product_amnt):
 	product_payload, attributes = create_product_data()
-	post_data_to_endpoint(product_payload, attributes)
+	post_data_to_endpoint(
+		product_payload=product_payload, 
+		variant_payload=attributes,
+		cookies=cookies)
+	

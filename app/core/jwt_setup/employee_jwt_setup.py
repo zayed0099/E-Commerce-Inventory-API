@@ -27,7 +27,7 @@ async def check_employee_role(role, access_token: str = Cookie(None)):
 	if not access_token:
 		raise HTTPException(status_code=401, detail="Not authenticated")
 
-	async with AsyncSession() as db:
+	async with SessionLocal() as db:
 		payload = decode_jwt(access_token)
 		
 		if not payload:

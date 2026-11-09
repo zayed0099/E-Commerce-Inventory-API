@@ -38,25 +38,29 @@ def create_supplier_data():
 	supp_type = random.choice(['manufacturer', 'distributor', 'dropshipper', 'white_label'])
 	
 	supplier_data = {
-	    "is_supplying": random.choice([True, False]),
-	    "name": name,
-	    "phone": phone,
-	    "sec_phone": sec_phone,
-	    "email": email,
-	    "sec_email": sec_email,
-	    "address_line": address_line,
-	    "postal_code": postal_code,
-	    "city": city,
-	    "country": country,
-	    "supp_type" : supp_type
+		"is_supplying": random.choice([True, False]),
+		"name": name,
+		"phone": phone,
+		"sec_phone": sec_phone,
+		"email": email,
+		"sec_email": sec_email,
+		"address_line": address_line,
+		"postal_code": postal_code,
+		"city": city,
+		"country": country,
+		"supp_type" : supp_type
 	}
 
 	return supplier_data
 
-def post_supplier_data(supplier_data):
+def post_supplier_data(supplier_data: dict, cookies: dict):
 	url_supplier = "http://127.0.0.1:8000/api/v1/internal/supplier/new"
 
-	supp_response = req.post(url_supplier, json=supplier_data)
+	supp_response = req.post(
+		url_supplier,
+		json=supplier_data,
+		cookies=cookies
+	)
 
 	if not supp_response.status_code in [200, 201]:
 		# return("Supplier Entry Failed!")
@@ -66,10 +70,12 @@ def post_supplier_data(supplier_data):
 	return(supp_response)
 
 count = int(input("How many suppier data for entry? :- "))
+jwt_token = input("Enter JWT Token for Authorization: ")
 
 for _ in range(count):
 	supplier_data = create_supplier_data()
-	print(post_supplier_data(supplier_data))
+	cookies = {"access_token": jwt_token}
+	print(post_supplier_data(supplier_data=supplier_data, cookies=cookies))
 
 
 

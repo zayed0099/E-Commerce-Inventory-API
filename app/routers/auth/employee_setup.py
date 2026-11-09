@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from app.database.db import get_db
 from app.schemas import (
 	TokenResponse, EmployeeVerification, APIResponse)
-from app.core.jwt_setup import get_current_user, create_jwt
+from app.core.jwt_setup import get_current_user, create_jwt, stock_manager_required
 from app.database import UserDB, AuthDataDB, EmployeeDB
 from .cred_auth import auth_router
 

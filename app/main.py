@@ -6,9 +6,10 @@ from datetime import datetime
 from app.database.db import init_db
 from app.core.logging import admin_logger
 from app.routers.product_display_and_order import orders, product_display
-from app.routers.auth import cred_auth
+from app.routers.auth.cred_auth import auth_router
+from app.routers.auth import employee_setup
 from app.routers.internal.product_management import product_mgmt_router
-from app.routers.internal import order_packaging
+from app.routers.internal import order_packaging, admin
 from app.core.logging import register_exception_handlers
 # from app.core.scheduler import start_scheduler
 
@@ -33,12 +34,12 @@ app = FastAPI(lifespan=lifespan)
 register_exception_handlers(app)
 
 # Router Management 
-app.include_router(cred_auth.auth_router)
+app.include_router(auth_router)
 app.include_router(product_mgmt_router)
 app.include_router(product_display.product_display_router)
 app.include_router(orders.order_router)
 app.include_router(order_packaging.packg_router)
-
+app.include_router(admin.admin_router)
 	
 if __name__ == "__main__":
 	uvicorn.run(

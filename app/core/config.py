@@ -7,12 +7,6 @@ load_dotenv()
 # TimeZone
 TZ = os.environ.get("TZ", "UTC")
 
-# Database
-DATABASE_URL = os.environ.get("DATABASE_URL", None)
-
-if DATABASE_URL is None:
-	raise RuntimeError("Database URL is not set")
-
 # JWT
 JWT_SECRET = os.environ.get("JWT_SECRET")
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")

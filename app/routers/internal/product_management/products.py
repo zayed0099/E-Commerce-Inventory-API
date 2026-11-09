@@ -25,14 +25,22 @@ root_str_enc = Hashids(
 	alphabet="QWERTYUOPADFGHJKLMNBVCXZ246789"
 )
 
+@product_mgmt_router.get("/product/test",status_code=status.HTTP_200_OK)
+async def test_product_entry(
+	current_user: dict = Depends(stock_manager_required)):
+	
+	auth_id = current_user["auth_id"]
+	return {"message": "Product Entry API is working fine."}
+
+
 @product_mgmt_router.post("/product/new", 
 	response_model=ProductEntryResponse, status_code=status.HTTP_201_CREATED)
 async def add_new_product(
 	data: SingleProductDataEntry,
-	# current_user: dict = Depends(stock_manager_required), 
+	current_user: dict = Depends(stock_manager_required), 
 	db: AsyncSession = Depends(get_db)):
 	
-	# user_id = current_user["user_id"]
+	auth_id = current_user["auth_id"]
 
 	product_name = data.product_name
 	short_desc = data.short_desc
@@ -80,7 +88,7 @@ async def add_new_product(
 		p_id = new_product_entry.id
 
 		admin_logger.info(
-			f"[PRODUCT_ENTRY]-> product_id: {p_id}, user_id: {user_id}")
+			f"[PRODUCT_ENTRY]-> product_id: {p_id}, auth_id: {auth_id}")
 
 		return ProductEntryResponse(
 			message="Product data entry successful.", product_id=p_id)
@@ -93,10 +101,10 @@ async def add_new_product(
 	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_product_variant(
 	data: ProductVariantEntry,
-	# current_user: dict = Depends(stock_manager_required), 
+	current_user: dict = Depends(stock_manager_required),
 	db: AsyncSession = Depends(get_db)):
 	
-	# user_id = current_user["user_id"]
+	auth_id = current_user["auth_id"]
 
 	# sku will be created in the frontend
 	sku = data.sku
@@ -128,8 +136,8 @@ async def add_product_variant(
 
 		await db.commit()
 
-		# admin_logger.info(
-		# 	f"[PRODUCT_VARIANT_ENTRY]-> sku_id: {sku_id}, user_id: {user_id}")
+		admin_logger.info(
+			f"[PRODUCT_VARIANT_ENTRY]-> sku_id: {sku_id}, auth_id: {auth_id}")
 
 		return APIResponse(message="Product Variant entry successful.")
 
@@ -142,10 +150,10 @@ async def add_product_variant(
 	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_supplier_for_product(
 	data: ProductSupplierLinkEntry,
-	# current_user: dict = Depends(stock_manager_required), 
+	current_user: dict = Depends(stock_manager_required),
 	db: AsyncSession = Depends(get_db)):
 	
-	# user_id = current_user["user_id"]
+	auth_id = current_user["auth_id"]
 	rate = data.rate
 	unit_supplied = data.unit_supplied
 	delivery_method = data.delivery_method
@@ -181,10 +189,10 @@ async def add_supplier_for_product(
 	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_new_supplier(
 	data: SupplierEntry,
-	# current_user: dict = Depends(stock_manager_required), 
+	current_user: dict = Depends(stock_manager_required),
 	db: AsyncSession = Depends(get_db)):
 	
-	# user_id = current_user["user_id"]
+	auth_id = current_user["auth_id"]
 
 	supp_name = data.name
 	email = data.email
@@ -226,8 +234,8 @@ async def add_new_supplier(
 		db.add(supplier_details)
 		await db.commit()
 
-		# admin_logger.info(
-		# 	f"[SUPPLIER_ENTRY]-> supp_id: {supp_id}, user_id: {user_id}")
+		admin_logger.info(
+			f"[SUPPLIER_ENTRY]-> supp_id: {supp_id}, auth_id: {auth_id}")
 
 		return APIResponse(message="Supplier and SupplierDetails entry successful.")
 
@@ -239,9 +247,10 @@ async def add_new_supplier(
 	response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 async def add_new_category(
 	data: CategoryEntry,
-	# current_user: dict = Depends(stock_manager_required), 
+	current_user: dict = Depends(stock_manager_required),
 	db: AsyncSession = Depends(get_db)):
 	
+	auth_id = current_user["auth_id"]
 	category = data.category
 
 	try:
