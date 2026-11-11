@@ -33,7 +33,7 @@ def create_product_data():
 	image_link = base_url + prod_name.replace(" ", "-")
 	short_desc = generate_short_desc(product_name)
 	current_price = random.choice([30000, 35000, 40000, 45000, 50000])
-	in_stock = random.choice([True, True, False])
+	in_stock = random.choice([True, True, True, False])
 	catg_id = 1 # for now electronics id = 1
 	supplier_id = random.randint(1, 10)
 	
@@ -90,10 +90,11 @@ def create_product_data():
 		"catg_id": 1
 	}
 
+	variant_in_stock = random.choice([True, True, False]) if in_stock == True else False
 	variant_payload = {
 		"sku" : sku,
-		"in_stock" : random.choice([True, False]) if in_stock == True else False,
-		"current_product_stock" : current_product_stock,
+		"in_stock" : variant_in_stock,
+		"current_product_stock" : current_product_stock if variant_in_stock else 0,
 		"attributes" : attributes
 	}
 
@@ -134,9 +135,9 @@ cookies = {
 }
 
 for _ in range(product_amnt):
-	product_payload, attributes = create_product_data()
+	product_payload, variant_payload = create_product_data()
 	post_data_to_endpoint(
 		product_payload=product_payload, 
-		variant_payload=attributes,
+		variant_payload=variant_payload,
 		cookies=cookies)
 	

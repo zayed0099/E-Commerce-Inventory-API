@@ -49,7 +49,10 @@ async def check_employee_role(role, access_token: str = Cookie(None)):
 
 		query = await db.execute(
 			select(EmployeeDB.id, EmployeeDB.role)
-			.where(EmployeeDB.auth_id == auth_id))
+			.where(
+				EmployeeDB.auth_id == auth_id,
+				EmployeeDB.is_active == True
+				))
 		employee = query.first()
 
 		if not employee:

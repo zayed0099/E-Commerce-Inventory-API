@@ -92,9 +92,14 @@ async def User_Login(
 		if existing.is_employee:
 			query = await db.execute(
 				select(EmployeeDB.id, EmployeeDB.role)
-				.where(EmployeeDB.auth_id == auth_id)
+				.where(EmployeeDB.auth_id == auth_id,
+					   EmployeeDB.is_active == True
+					)
 			)						
 			emp_role = query.first()
+
+			if not emp_role:
+				raise HTTPException(status_code=401, detail="Employee account is not active.")
 			
 			role = emp_role.role
 
